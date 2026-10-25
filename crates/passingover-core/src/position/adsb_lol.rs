@@ -1,6 +1,7 @@
 //! adsb.lol: <https://api.adsb.lol/docs>. Data under the ODbL 1.0.
 
-use super::{Area, ParseError, PositionSource, Request, Snapshot, SourceId, readsb};
+use super::{Area, ParseError, PositionSource, Snapshot, SourceId, readsb};
+use crate::http::Request;
 
 /// The adsb.lol `/v2/point` API.
 #[derive(Debug, Clone, Copy, Default)]

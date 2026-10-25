@@ -12,6 +12,14 @@ homepage.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+fastrand.workspace = true
+ureq = { workspace = true, optional = true }
+
+[features]
+default = ["http"]
+# The blocking HTTP client (ureq). Leave it out where the host supplies its
+# own transport, e.g. a future WASM build.
+http = ["dep:ureq"]
 
 [lints]
 workspace = true

@@ -6,6 +6,8 @@
 
 pub mod aircraft;
 pub mod geo;
+pub mod http;
+pub mod polite;
 pub mod position;
 
 pub use aircraft::Aircraft;

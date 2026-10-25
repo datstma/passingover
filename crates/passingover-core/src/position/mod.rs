@@ -1,16 +1,19 @@
 //! Live aircraft positions from community ADS-B feeds.
 //!
 //! Sources are sans-IO (D21): a [`PositionSource`] turns an [`Area`] into a
-//! [`Request`] and parses a response body into a [`Snapshot`]. Sending the
-//! request, with the User-Agent, timeouts, backoff and failover from D15,
-//! is the job of a separate transport layer.
+//! [`Request`] and parses a response body into a [`Snapshot`]. A
+//! [`PositionFeed`] sends the requests through an
+//! [`HttpClient`](crate::http::HttpClient) and applies the backoff, rate
+//! limits and failover from D15 and D17.
 
 mod adsb_fi;
 mod adsb_lol;
+mod feed;
 mod readsb;
 
 pub use adsb_fi::AdsbFi;
 pub use adsb_lol::AdsbLol;
+pub use feed::{FetchError, PositionFeed, choose_primary, source_for};
 
 use std::time::SystemTime;
 
@@ -18,18 +21,13 @@ use thiserror::Error;
 
 use crate::aircraft::Aircraft;
 use crate::geo::{QueryPoint, Radius};
+use crate::http::Request;
 
 /// The area to search: a privacy-rounded point and a radius.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Area {
     pub center: QueryPoint,
     pub radius: Radius,
-}
-
-/// An HTTP GET request for the transport layer to send.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Request {
-    pub url: String,
 }
 
 /// The aircraft a source reported at one moment.

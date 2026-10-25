@@ -37,6 +37,10 @@ allow = [
 confidence-threshold = 0.9
 # Allowances for licenses no current dependency uses are fine.
 unused-allowed-license = "allow"
+exceptions = [
+    # Mozilla's root certificate list, shipped as data for TLS (ureq/rustls).
+    { allow = ["CDLA-Permissive-2.0"], crate = "webpki-roots" },
+]
 
 [bans]
 multiple-versions = "warn"

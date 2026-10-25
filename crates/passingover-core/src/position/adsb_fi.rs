@@ -1,7 +1,8 @@
 //! adsb.fi open data: <https://github.com/adsbfi/opendata>. Personal,
 //! non-commercial use only; attribution with a link is required.
 
-use super::{Area, ParseError, PositionSource, Request, Snapshot, SourceId, readsb};
+use super::{Area, ParseError, PositionSource, Snapshot, SourceId, readsb};
+use crate::http::Request;
 
 /// The adsb.fi v3 `lat/lon/dist` API.
 #[derive(Debug, Clone, Copy, Default)]
