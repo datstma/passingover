@@ -130,6 +130,65 @@ Notes: `lat`/`lon` older than 60 s are dropped by readsb and moved to
   <https://www.adsb.lol/docs/open-data/api/>,
   <https://www.adsb.lol/docs/privacy-license/>, <https://www.adsb.lol/request>.
 
+#### How adsb.lol works, and what can be downloaded
+
+*Checked 2026-10-25.* Volunteers' receivers feed ADS-B and MLAT into adsb.lol's
+readsb cluster, which keeps the current state of every aircraft in memory.
+Data comes out three ways:
+
+1. **The public REST API above** answers "what is in this circle right
+   now". It is the only public live path. There is no stream or push, so
+   polling is the intended pattern (the adsb.lol map itself polls the same way).
+2. **Feeders only:** `re-api.adsb.lol` (the raw readsb API) and Beast/MLAT
+   output. Both are reachable only from the feeding station's IP, so they are
+   no use to app users.
+3. **Daily historical dumps** in the GitHub releases of
+   `adsblol/globe_history_2026`: per-aircraft traces of the previous day,
+   about 3.4 GB per day per instance. ODbL, which the operator confirmed
+   ("odbl1.0", globe_history_2026#6). Good for analytics, but they can't
+   answer "what's overhead now".
+
+The route data we bundle (VRS standing data) is also mirrored by adsb.lol, but
+it is a separate CC0 dataset.
+
+#### Operator stance on production use and exceptions
+
+*Checked 2026-10-25.* Nothing documents exceptions being granted.
+
+- The API description invites contact ("If you want to use the API for
+  production purposes, please contact me so I do not break your application
+  by accident") and says a key obtained by feeding will be required "in the
+  future".
+- The only formal path is the ad-hoc key form (<https://www.adsb.lol/request>).
+  It asks what the key is for, how you comply with the ODbL (reviewed before a
+  key is issued), and the expected requests per second; for commercial use it
+  also asks for a budget. A key can't be kept secret in a distributed app, so
+  using one would need a proxy.
+- One person (@iakat) runs the service in their spare time and pays for it out
+  of pocket. They declined a live feed ("Unfortunately I cannot afford this",
+  adsblol/feed#20). In adsblol/feed#22 (2026-09-19) they wrote: "this is a
+  hobby project provided as-is. there are no guarantees of availability, api
+  access, uptime, response times, support, contactability, or continued
+  availability of any particular service". They also said GitHub is "for
+  actual bugs rather than individual access/support requests", and pointed to
+  IRC (linked from the website) for discussion.
+- Two production-use requests (adsblol/website#279, 2026-10-11, and #280,
+  2026-10-20) have no reply. A report of 429s for a Cloudflare Workers app
+  (website#272) and its CORS pull request (api#63) were closed without comment
+  on 2026-09-25.
+- Reported in website#272 but **not reproduced**: a generic User-Agent gets
+  `403 User-Agent too generic; include valid contact info.` Our one request
+  with curl's default User-Agent got 200. Datacenter egress (Cloudflare
+  Workers) got 429.
+- The `500;w=86400` header is not defined in the public infra repo
+  (`adsblol/infra`), so it is probably set at the edge. Whether it is enforced
+  per IP is **unverified**; we have not tested it, to avoid wasting their
+  capacity.
+
+**Implication:** don't plan on an exception. Design so that a large install
+base stays a small load on adsb.lol (see the recommendation and open
+question 1).
+
 ### adsb.fi
 
 - **Endpoint (radius):** `GET https://opendata.adsb.fi/api/v3/lat/{lat}/lon/{lon}/dist/{nm}`,
@@ -525,7 +584,7 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
 
 | Category | Primary | Fallback | Why |
 |---|---|---|---|
-| Positions | **adsb.lol** `/v2/point` | **adsb.fi** `/api/v3/lat/…/lon/…/dist/…` | Same JSON shape, one parser. adsb.lol's ODbL allows commercial use and has the clearest license; adsb.fi has no daily cap but is personal/non-commercial only. Email the adsb.lol operator before release (production use, the 500/day header, the planned key). Drop or renegotiate adsb.fi if a paid tier comes. |
+| Positions | **adsb.lol** `/v2/point` | **adsb.fi** `/api/v3/lat/…/lon/…/dist/…` | Same JSON shape, one parser. adsb.lol's ODbL allows commercial use and has the clearest license; adsb.fi has no daily cap but is personal/non-commercial only. Tell the adsb.lol operator before release via the key form or IRC (production use, the 500/day header, the planned key), but don't count on a reply (see "Operator stance"). There is no paid tier (D16), so adsb.fi's non-commercial terms fit; still confirm that app-store distribution of a free app is OK. |
 | Routes | **VRS standing data**, bundled (CC0) | **adsbdb** online lookup, short in-memory cache | VRS is public domain, updated daily, and offline: no per-user requests and no location leaves the device. adsbdb covers callsigns VRS lacks but its route data may not be stored or redistributed. Both need the plausibility check. |
 | Arrival time | **Estimate** from remaining great-circle distance ÷ ground speed + ~15 min | none | No free keyless source exists; keyed APIs need a proxy and have tiny quotas. |
 | Weather | **Open-Meteo** (free, non-commercial) | **MET Norway** Locationforecast | Open-Meteo is keyless, global, simple, and also returns the time zone. MET Norway allows commercial use and is the fallback, but its terms discourage direct client calls at scale and cap the whole app at 20 req/s. If a paid tier comes: Open-Meteo paid plan behind a proxy, or MET Norway behind a proxy. METAR from aviationweather.gov is an optional extra for observed conditions. |
@@ -554,9 +613,12 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
 ## Open questions / risks
 
 1. **adsb.lol daily cap and future key.** The `500;w=86400` header would make
-   a 15 s poll last about 2 h a day per IP. Ask the operator (info@adsb.lol)
-   whether it is enforced per IP, whether a distributed app is welcome, and
-   what the planned key means for apps. The key will need a proxy.
+   a 15 s poll last about 2 h a day per IP. The operator has said publicly
+   that there are no guarantees of API access or support, and production-use
+   requests on GitHub go unanswered (see "Operator stance"). We can still say
+   hello via the key form or IRC, but the design must not depend on a reply:
+   spread the load across sources, poll gently, and treat a future key
+   requirement as "adsb.lol drops out" unless a proxy exists.
 2. **adsb.fi is personal, non-commercial only.** Ask whether a free
    open-source app in app stores qualifies. It cannot stay as a source in a paid
    tier without an agreement.
@@ -578,10 +640,9 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
    stale. The plausibility check is required, and the UI should mark
    uncertainty.
 9. **No arrival times.** "Landing in 7 h 40 m" will be an estimate.
-10. **Commercial path.** A paid tier would need, at least, an Open-Meteo
-    subscription (key, so proxy) or MET Norway via a proxy, agreements with
-    adsb.lol (and adsb.fi or OpenSky if kept), and a check that adsbdb lookups
-    are acceptable.
+10. **Commercial path:** not applicable. Passing Over stays free and open
+    source with no paid tier, ads or subscriptions (D16). Non-commercial terms
+    (adsb.fi, Open-Meteo's free API) are acceptable.
 11. **ODbL duties.** adsb.lol data and the tzf time zone data need attribution;
     any database we publish that is derived from them (for example a shared
     route table learned from observations, or a proxy cache served to others)

@@ -151,7 +151,7 @@ rounded to 5 min.
 **Why:** keyed APIs need a proxy and have quotas far too small for per-user calls.
 
 ### D13 — Weather: Open-Meteo primary, MET Norway fallback
-*2026-10-25 · Accepted for the free, non-commercial app*
+*2026-10-25 · Accepted (non-commercial terms are fine per D16)*
 
 Weather is fetched for the **destination airport's** coordinates (never the
 user's). Open-Meteo's free API is the primary source and also returns the IANA
@@ -159,8 +159,8 @@ time zone; MET Norway Locationforecast is the fallback (identifying
 User-Agent, honour `Expires`). Both need on-screen attribution.
 
 **Why:** keyless, global and simple. Open-Meteo's free tier is non-commercial
-only, so a paid tier would need its subscription (and a proxy) or MET Norway
-behind a proxy. Revisit this if monetisation comes up.
+only, which fits D16: Open-Meteo counts apps without subscriptions or
+advertising as non-commercial.
 
 ### D14 — Airports and time zones bundled; tz computed at build time
 *2026-10-25 · Accepted*
@@ -193,3 +193,13 @@ obligations are kept clean and explicit.
 
 **Why:** keeps a distributed, keyless app within the community sources' limits
 and keeps the user's location coarse.
+
+### D16 — Pure open source, no paid tier
+*2026-10-25 · Accepted (owner)*
+
+Passing Over stays free and open source: no paid tier, subscriptions, ads or
+commercial offering.
+
+**Why:** the owner's intent. It also means the non-commercial terms of
+community data sources (adsb.fi, Open-Meteo's free API) fit the project,
+which removes the "commercial path" risk from docs/data-sources.md.
