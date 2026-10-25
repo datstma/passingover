@@ -24,6 +24,7 @@ there?":
 - Nothing that feels like an aviation instrument unless the user opts into a
   "technical" layout.
 - Metric by default, imperial available.
+- Pure open source: no paid tier, subscriptions or ads (D16).
 - Privacy: the user's location never leaves the device except as a query to
   the data sources, and coordinates are rounded to ~1 km first.
 
@@ -131,6 +132,10 @@ version must match the `flutter_rust_bridge` crate and Dart package.
   one-line rationale. Update `docs/milestones.md` status as work lands.
 - Small, reviewable commits with clear messages, on `main`. No remote: never
   create one or push.
+- Commits are authored and committed as **Stefan Månsby** (the repo-local git
+  identity). No AI co-author trailers (`Co-Authored-By: Claude …`), no
+  "Generated with …" lines, and no other AI attribution in commit messages or
+  PR descriptions.
 - Ask the owner before anything hard to undo, or before installing system-wide
   tooling beyond the usual Rust/Flutter toolchains. If a prerequisite is
   missing (Flutter SDK, Xcode, Android SDK, Rust targets), say exactly what to
