@@ -31,3 +31,12 @@ pub const LOW_QUOTA_SHARE: f64 = 0.10;
 /// Share of installs that use adsb.lol as their primary source; the rest use
 /// adsb.fi (D17). Shift it in a release if an operator asks.
 pub const ADSB_LOL_PRIMARY_SHARE: f64 = 0.5;
+
+/// How long a route found online is reused before asking again.
+pub const ROUTE_CACHE_TTL: Duration = Duration::from_secs(12 * 60 * 60);
+/// How long "no route known" from an online source is remembered.
+pub const ROUTE_MISS_CACHE_TTL: Duration = Duration::from_secs(6 * 60 * 60);
+/// At most this many online route lookups per minute.
+pub const ROUTE_LOOKUPS_PER_MINUTE: usize = 10;
+/// Pause online route lookups this long after an error or 429.
+pub const ROUTE_SOURCE_PAUSE: Duration = Duration::from_secs(5 * 60);

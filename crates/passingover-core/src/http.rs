@@ -83,6 +83,15 @@ impl Response {
     }
 }
 
+/// A response body that could not be turned into domain types.
+#[derive(Debug, Error)]
+pub enum ParseError {
+    #[error("unexpected response format: {0}")]
+    Json(#[from] serde_json::Error),
+    #[error("the source reported an error: {0}")]
+    Source(String),
+}
+
 /// The request never produced a response: DNS, connection, TLS or timeout.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 #[error("network error: {0}")]

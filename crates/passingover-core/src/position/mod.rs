@@ -17,10 +17,9 @@ pub use feed::{FetchError, PositionFeed, choose_primary, source_for};
 
 use std::time::SystemTime;
 
-use thiserror::Error;
-
 use crate::aircraft::Aircraft;
 use crate::geo::{QueryPoint, Radius};
+pub use crate::http::ParseError;
 use crate::http::Request;
 
 /// The area to search: a privacy-rounded point and a radius.
@@ -79,15 +78,6 @@ pub struct Attribution {
     pub text: &'static str,
     pub url: &'static str,
     pub license_url: Option<&'static str>,
-}
-
-/// A response body that could not be turned into a [`Snapshot`].
-#[derive(Debug, Error)]
-pub enum ParseError {
-    #[error("unexpected response format: {0}")]
-    Json(#[from] serde_json::Error),
-    #[error("the source reported an error: {0}")]
-    Source(String),
 }
 
 /// A source of live aircraft positions.

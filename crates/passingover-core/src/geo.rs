@@ -8,7 +8,7 @@ use thiserror::Error;
 pub const METRES_PER_NAUTICAL_MILE: f64 = 1852.0;
 
 /// Mean Earth radius in metres (IUGG), used for great-circle distances.
-const EARTH_RADIUS_M: f64 = 6_371_008.8;
+pub(crate) const EARTH_RADIUS_M: f64 = 6_371_008.8;
 
 /// An invalid coordinate or radius.
 #[derive(Debug, Clone, Copy, PartialEq, Error)]
@@ -58,6 +58,22 @@ impl Coordinate {
         let a = (dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
         2.0 * EARTH_RADIUS_M * a.sqrt().min(1.0).asin()
     }
+
+    /// Initial great-circle bearing to `other`, in degrees clockwise from
+    /// true north (0–360).
+    pub fn bearing_to(&self, other: &Coordinate) -> f64 {
+        let (lat1, lat2) = (self.lat.to_radians(), other.lat.to_radians());
+        let dlon = (other.lon - self.lon).to_radians();
+        let y = dlon.sin() * lat2.cos();
+        let x = lat1.cos() * lat2.sin() - lat1.sin() * lat2.cos() * dlon.cos();
+        y.atan2(x).to_degrees().rem_euclid(360.0)
+    }
+}
+
+/// Smallest difference between two bearings in degrees (0–180).
+pub fn angle_between(a: f64, b: f64) -> f64 {
+    let d = (a - b).rem_euclid(360.0);
+    d.min(360.0 - d)
 }
 
 /// A location that is safe to send to a third party.
@@ -220,6 +236,25 @@ mod tests {
         let d = coord(55.6181, 12.6561).distance_to(&coord(59.6519, 17.9186));
         assert!((d - 547_000.0).abs() < 3_000.0, "{d}");
         assert_eq!(coord(10.0, 20.0).distance_to(&coord(10.0, 20.0)), 0.0);
+    }
+
+    #[test]
+    fn bearings_point_the_right_way() {
+        let origin = coord(0.0, 0.0);
+        assert!((origin.bearing_to(&coord(1.0, 0.0)) - 0.0).abs() < 1e-9);
+        assert!((origin.bearing_to(&coord(0.0, 1.0)) - 90.0).abs() < 1e-9);
+        assert!((origin.bearing_to(&coord(-1.0, 0.0)) - 180.0).abs() < 1e-9);
+        assert!((origin.bearing_to(&coord(0.0, -1.0)) - 270.0).abs() < 1e-9);
+        // Stockholm to Chicago starts out west-north-west (great circle).
+        let b = coord(59.6519, 17.9186).bearing_to(&coord(41.9786, -87.9048));
+        assert!((300.0..320.0).contains(&b), "{b}");
+    }
+
+    #[test]
+    fn angle_between_wraps_around_north() {
+        assert_eq!(angle_between(350.0, 10.0), 20.0);
+        assert_eq!(angle_between(10.0, 350.0), 20.0);
+        assert_eq!(angle_between(90.0, 270.0), 180.0);
     }
 
     #[test]

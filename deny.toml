@@ -40,6 +40,10 @@ unused-allowed-license = "allow"
 exceptions = [
     # Mozilla's root certificate list, shipped as data for TLS (ureq/rustls).
     { allow = ["CDLA-Permissive-2.0"], crate = "webpki-roots" },
+    # Time zone boundaries (timezone-boundary-builder, from OpenStreetMap).
+    # Only the xtask data build uses them; the airport table it produces is
+    # published under the ODbL with attribution (D14, D24).
+    { allow = ["ODbL-1.0"], crate = "tzf-dist" },
 ]
 
 [bans]

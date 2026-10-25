@@ -28,3 +28,24 @@ These data files are **not** covered by the project's MIT/Apache-2.0 license.
 
 To record a new fixture, make one request with the project User-Agent at a
 public location, save the body unmodified, and add it to the tables above.
+
+## routes/
+
+| File | Request |
+|---|---|
+| `adsbdb_callsign_SAS945.json` | `GET https://api.adsbdb.com/v0/callsign/SAS945` (HTTP 200) |
+| `adsbdb_callsign_unknown.json` | `GET https://api.adsbdb.com/v0/callsign/ZZZ9999` (HTTP 404) |
+
+Recorded on 2026-10-25. adsbdb's route data may not be copied into other
+databases, so only these two single responses are kept, to test the format.
+The route itself (SAS945, Stockholm Arlanda → Chicago O'Hare) is also in the
+CC0 VRS standing data.
+
+## data/
+
+A few rows of each table built by `cargo xtask data` (VRS commit
+`bf60597`, 2026-10-25): the routes in the position fixtures plus SAS945, and
+their airports and airlines. Routes and airlines are CC0 (VRS standing data);
+`airports.tsv` includes time zones derived from timezone-boundary-builder
+(© OpenStreetMap contributors) and is under the
+[ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).

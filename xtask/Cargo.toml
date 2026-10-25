@@ -1,0 +1,16 @@
+[package]
+name = "xtask"
+description = "Developer tasks for Passing Over (cargo xtask …)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+csv = "1.4"
+serde_json.workspace = true
+tzf-rs = { version = "2.1", default-features = false, features = ["bundled"] }
+
+[lints]
+workspace = true

@@ -5,12 +5,19 @@
 //! flutter_rust_bridge wrapper (`app/rust`), and by tests.
 
 pub mod aircraft;
+pub mod airport;
+pub mod data;
+pub mod flight;
 pub mod geo;
 pub mod http;
 pub mod polite;
 pub mod position;
+pub mod route;
+pub mod story;
 
 pub use aircraft::Aircraft;
+pub use airport::{Airline, Airport};
+pub use flight::Flight;
 pub use geo::{Coordinate, GeoError, QueryPoint, Radius};
 
 /// Version of the core crate, as set in Cargo.toml.
