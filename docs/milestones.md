@@ -27,11 +27,20 @@ Linux and Windows.
 - [x] Rust workspace: `passingover-core`, `passingover-cli` (`passingover hello`)
 - [x] Docs: CLAUDE.md, README, CONTRIBUTING, decisions, milestones, design placeholder
 - [ ] docs/data-sources.md: first research pass
+- [x] CI: Rust job (fmt, clippy `-D warnings`, test) on macOS, Linux, Windows
+- [x] `flutter_rust_bridge_codegen` 2.13.0 installed locally
+- [ ] **Blocked: Flutter SDK 3.47.8 not installed on the dev machine**
 - [ ] Flutter app in `app/` for macOS, Windows, Linux, iOS, Android
-- [ ] flutter_rust_bridge wired up (`app/rust`, Native Assets backend)
+      (`flutter create --org se.mansby --project-name passingover`)
+- [ ] flutter_rust_bridge wired up: `flutter_rust_bridge_codegen integrate
+      --integration-backend native-assets` (D7). Bridge crate in `app/rust`,
+      added to the root workspace, with `rust-toolchain.toml` pinned to the
+      same channel as the root
 - [ ] "Hello from Rust core" shown in the app on macOS desktop
-- [ ] CI: Rust (fmt, clippy, test) and Flutter (analyze, test, desktop build,
-      Rust-calling integration test) on macOS, Linux, Windows
+- [ ] CI: Flutter job on macOS, Linux (xvfb), Windows: `pub get`, `analyze`,
+      `test`, `build <desktop> --debug`, `test integration_test -d <desktop>`
+      (calls into Rust); install the pinned toolchain in `app/rust` first. Add
+      a job that fails if the two `rust-toolchain.toml` channels differ
 
 ## M1 — Core + CLI
 

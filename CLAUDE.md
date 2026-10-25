@@ -58,7 +58,7 @@ passingover/
 ├── crates/
 │   ├── passingover-core/   # pure Rust: sources, filtering, enrichment, stories
 │   └── passingover-cli/    # `passingover` binary
-├── app/                    # Flutter app (all five platforms)
+├── app/                    # Flutter app (all five platforms) — NOT YET CREATED, see M0
 │   ├── hook/build.dart     # builds app/rust via native_toolchain_rust
 │   ├── rust/               # thin flutter_rust_bridge crate → passingover-core
 │   ├── lib/src/rust/       # GENERATED Dart bindings — do not edit
@@ -136,6 +136,7 @@ version must match the `flutter_rust_bridge` crate and Dart package.
   missing (Flutter SDK, Xcode, Android SDK, Rust targets), say exactly what to
   install rather than working around it.
 - Toolchain bumps: change `rust-toolchain.toml` and
-  `app/rust/rust-toolchain.toml` together (CI checks), and log a decision.
+  `app/rust/rust-toolchain.toml` together (CI checks this once `app/` exists),
+  and log a decision.
 - Generated files (`app/lib/src/rust/**`, `app/rust/src/frb_generated.rs`) are
   regenerated, never hand-edited.
