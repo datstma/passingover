@@ -4,6 +4,7 @@ members = [
     "crates/passingover-core",
     "crates/passingover-cli",
     "xtask",
+    "app/rust",
 ]
 
 [workspace.package]
