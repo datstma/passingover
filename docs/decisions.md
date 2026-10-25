@@ -111,3 +111,85 @@ The `passingover` binary lives in `crates/passingover-cli` and uses clap's
 derive API. M0 has `hello` and `--version`; M1 adds `now --lat --lon`.
 
 **Why:** clap is the de-facto standard and keeps subcommands declarative.
+
+### D10 — Live positions: adsb.lol primary, adsb.fi fallback
+*2026-10-25 · Accepted for development; confirm with operators before release*
+
+`PositionSource` implementations for adsb.lol (`/v2/point/{lat}/{lon}/{nm}`)
+and adsb.fi (`/api/v3/lat/…/lon/…/dist/…`). Both return the readsb v2 JSON
+shape, so they share one parser. Not used: OpenSky (terms appear to require a
+written agreement for a live product; 400 anonymous credits/day),
+airplanes.live (HTTP 403 to anonymous requests), ADS-B Exchange (paid, needs a
+key).
+
+**Why:** keyless, global, same format; adsb.lol's data is ODbL, which permits
+commercial use. Open risks: adsb.lol sends a `500;w=86400` rate-limit header
+and plans a key; adsb.fi is personal/non-commercial only. Both are listed in
+docs/data-sources.md, with the operators to contact before release.
+
+### D11 — Routes: bundled VRS standing data, adsbdb online fallback
+*2026-10-25 · Accepted*
+
+Callsign → route comes from a bundled snapshot of the Virtual Radar Server
+standing data (CC0, updated daily). For callsigns it lacks, adsbdb is queried
+live, and its results are cached in memory only, because its route data may
+not be stored or redistributed. Every route must pass a plausibility check
+(aircraft near the origin→destination great circle and heading toward the
+destination) or it is shown as unknown.
+
+**Why:** public-domain, offline, no per-user requests and no location leaves
+the device; crowd-sourced routes are sometimes wrong, so they get checked.
+
+### D12 — Time to landing is an estimate
+*2026-10-25 · Accepted*
+
+No free, keyless source gives scheduled or estimated arrival times. "Landing
+in …" = great-circle distance remaining ÷ ground speed (a typical cruise speed
+while climbing), plus ~15 min for the approach. It is shown as approximate and
+rounded to 5 min.
+
+**Why:** keyed APIs need a proxy and have quotas far too small for per-user calls.
+
+### D13 — Weather: Open-Meteo primary, MET Norway fallback
+*2026-10-25 · Accepted for the free, non-commercial app*
+
+Weather is fetched for the **destination airport's** coordinates (never the
+user's). Open-Meteo's free API is the primary source and also returns the IANA
+time zone; MET Norway Locationforecast is the fallback (identifying
+User-Agent, honour `Expires`). Both need on-screen attribution.
+
+**Why:** keyless, global and simple. Open-Meteo's free tier is non-commercial
+only, so a paid tier would need its subscription (and a proxy) or MET Norway
+behind a proxy. Revisit this if monetisation comes up.
+
+### D14 — Airports and time zones bundled; tz computed at build time
+*2026-10-25 · Accepted*
+
+The airport table comes from VRS airports (CC0; guaranteed to match VRS route
+codes), with gaps filled from OurAirports (public domain). Neither has a time
+zone, so a build step uses `tzf-rs` to add an IANA `tz` column, and the app
+uses `chrono-tz` to get the current offset. mwgg/Airports (MIT) is a
+cross-check. The generated table is published as a separate data file under
+the ODbL with attribution, because the tzf boundary data is ODbL. The code
+license is unaffected.
+
+**Why:** fully offline lookups, no per-user requests, and the license
+obligations are kept clean and explicit.
+
+### D15 — Politeness and privacy defaults
+*2026-10-25 · Accepted*
+
+- Positions every 15 s while visible (never under 10 s, ±2 s jitter); paused
+  when hidden. Ambient mode polls at 60 s until a source agrees to more.
+- Default radius 20 nm (~37 km), user range 5–25 nm; one request per poll.
+- User coordinates rounded to 2 decimals (~1.1 km) before any request; route
+  and weather requests carry only callsigns or destination coordinates.
+- User-Agent `PassingOver/<version> (+https://github.com/datstma/passingover)`.
+- Backoff: honour `Retry-After` and rate-limit headers; exponential backoff
+  with jitter capped at 10 min; switch to the fallback after 3 failures; never
+  retry 401/403 in a loop.
+- Cache TTLs, timeouts and the attribution screen are as in
+  docs/data-sources.md ("Politeness defaults").
+
+**Why:** keeps a distributed, keyless app within the community sources' limits
+and keeps the user's location coarse.

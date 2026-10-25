@@ -26,7 +26,7 @@ Linux and Windows.
 - [x] Licenses (MIT, Apache-2.0)
 - [x] Rust workspace: `passingover-core`, `passingover-cli` (`passingover hello`)
 - [x] Docs: CLAUDE.md, README, CONTRIBUTING, decisions, milestones, design placeholder
-- [ ] docs/data-sources.md: first research pass
+- [x] docs/data-sources.md: first research pass; source decisions D10–D15
 - [x] CI: Rust job (fmt, clippy `-D warnings`, test) on macOS, Linux, Windows
 - [x] `flutter_rust_bridge_codegen` 2.13.0 installed locally
 - [ ] **Blocked: Flutter SDK 3.47.8 not installed on the dev machine**
@@ -49,12 +49,25 @@ filters them, and enriches them with route and airport data.
 `passingover now --lat --lon` prints the flights overhead as short "dreamy"
 lines.
 
-- `PositionSource`, `RouteSource` (and later `WeatherSource`) traits; one
-  implementation each, chosen in docs/decisions.md
-- Politeness: ~10–15 s polling, small default radius, caching, backoff
-- Privacy: coordinates rounded to ~1 km before leaving the device
-- Bundled or cached airport data with IANA time zones
-- Unit tests on recorded JSON fixtures; one opt-in live integration test
+Sources follow D10–D15 and docs/data-sources.md.
+
+- Domain types in core: `Coordinate` (with ~1 km rounding), `Aircraft`,
+  `Airport`, `Route`, `Flight` (aircraft + route + estimates)
+- `PositionSource` trait with an adsb.lol implementation and an adsb.fi
+  fallback, sharing one readsb v2 parser; filter out ground traffic and
+  non-aircraft
+- `RouteSource` trait: bundled VRS standing-data snapshot first, adsbdb live
+  lookup as fallback (in-memory cache only); plausibility check
+- Airport table: a build step (`xtask` or script) that joins VRS airports and
+  OurAirports and adds `tz` via tzf-rs; local time via chrono-tz
+- Time-to-landing estimate (D12)
+- Politeness layer: User-Agent, timeouts, rate-limit headers, backoff, source
+  failover (D15)
+- `passingover now --lat --lon [--radius]`, printing short "dreamy" lines;
+  metric by default, `--imperial`
+- Unit tests on recorded JSON fixtures; one `#[ignore]` live test
+- Before release, not blocking M1: ask the adsb.lol operator about the
+  500/day header and app use, and adsb.fi about app-store distribution
 
 ## M2 — First app view
 
