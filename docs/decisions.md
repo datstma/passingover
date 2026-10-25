@@ -232,3 +232,45 @@ depend on an exception. With no paid tier (D16), adsb.fi's personal,
 non-commercial terms fit. Splitting installs between the two roughly halves
 the load on each, and either source alone can still carry everyone if the
 other disappears.
+
+### D18 — No hosted CI: checks run on the owner's machines
+*2026-10-25 · Accepted (owner) · Replaces the GitHub Actions workflow from M0*
+
+`scripts/ci.sh` runs the checks on this Mac (fmt, clippy `-D warnings`, tests,
+cargo-deny), then syncs the working tree over SSH to a Linux and a Windows
+build host and runs clippy and the tests there. Host names live in the
+git-ignored `.ci-hosts.local`, not in the repo. The build hosts are shared
+with other projects, so the script keeps everything in one directory per host
+(`~/passingover-ci`: `src/`, `target/`, `inbox/`), sets env vars per command
+only, installs the pinned toolchain alongside the host's others without
+changing defaults, and `scripts/ci.sh clean` removes it all. On Windows it
+puts the pinned toolchain's own `bin` first on PATH for the session, because
+rustup's symlinked proxies can't be followed from an elevated SSH shell.
+
+**Why:** the owner's choice; real hardware for all three desktop platforms is
+at hand, and the Mac does the Apple builds. Trade-off: pull requests are not
+checked automatically, so maintainers run the script before merging.
+
+### D19 — Dependency policy with cargo-deny
+*2026-10-25 · Accepted*
+
+`deny.toml` allows only licenses compatible with MIT OR Apache-2.0 (MIT,
+Apache-2.0, BSD-2/3-Clause, ISC, Unicode-3.0, Zlib, CC0-1.0), fails on RustSec
+advisories (vulnerable, unmaintained, yanked), denies wildcard versions and
+non-crates.io sources, and warns on duplicate versions. It checks the
+dependency graph for every target platform. GitHub's Dependabot security
+alerts are on; Dependabot version-update PRs are not used, because no hosted
+CI would check them (D18).
+
+**Why:** keeps the dependency tree license-clean and free of known advisories,
+checked on every `scripts/ci.sh` run.
+
+### D20 — Project tools live in `.tools/`, not `~/.cargo/bin`
+*2026-10-25 · Accepted*
+
+`scripts/install-tools.sh` installs pinned project tools (currently
+`flutter_rust_bridge_codegen` 2.13.0) with `cargo install --root .tools`
+(git-ignored). Docs and scripts call `.tools/bin/<tool>`.
+
+**Why:** the development machines host other projects that may need other
+versions of the same tools; a repo-local install can't collide with them.

@@ -1,4 +1,6 @@
 /target
+/.tools/
+/.ci-hosts.local
 .DS_Store
 *.swp
 .idea/

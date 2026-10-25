@@ -11,11 +11,12 @@ the direction.
    the cross-compilation targets listed in `app/rust/rust-toolchain.toml`.
 2. Install [Flutter](https://docs.flutter.dev/get-started/install) 3.47
    (stable) and run `flutter doctor` for your platform.
-3. If you change the bridge API, install the code generator at the same
-   version as the `flutter_rust_bridge` dependency:
+3. If you change the bridge API, install the code generator. It goes into
+   the git-ignored `.tools/` folder, pinned to the same version as the
+   `flutter_rust_bridge` dependency:
 
    ```sh
-   cargo install flutter_rust_bridge_codegen --version 2.13.0 --locked
+   scripts/install-tools.sh
    ```
 
 ## Everyday commands
@@ -35,10 +36,13 @@ flutter test integration_test -d macos   # or -d linux / -d windows
 flutter run -d macos
 
 # Regenerate bindings after editing app/rust/src/api/
-flutter_rust_bridge_codegen generate
+../.tools/bin/flutter_rust_bridge_codegen generate
 ```
 
-CI runs the same checks on macOS, Linux and Windows.
+There is no hosted CI. Before opening a PR, run `scripts/ci.sh local`. It
+runs rustfmt, clippy, the tests and [cargo-deny](https://github.com/EmbarkStudios/cargo-deny)
+(license and advisory checks) if you have it installed. The maintainer runs
+the full macOS/Linux/Windows check before merging.
 
 ## Where code goes
 

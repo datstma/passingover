@@ -69,7 +69,11 @@ passingover/
 │   ├── decisions.md        # numbered decision log (D1, D2, …)
 │   ├── milestones.md       # M0…M7 with status
 │   └── data-sources.md     # every external source: terms, limits, attribution
-└── .github/workflows/      # CI
+├── scripts/
+│   ├── ci.sh               # local + remote Linux/Windows checks (no hosted CI)
+│   └── install-tools.sh    # pinned project tools into .tools/ (git-ignored)
+├── deny.toml               # cargo-deny: licenses, advisories, sources
+└── .github/                # issue/PR templates only; no workflows (D18)
 ```
 
 ## Architecture rules
@@ -113,12 +117,40 @@ flutter test integration_test -d macos     # launches the app, calls into Rust
 After changing the bridge API in `app/rust/src/api/`:
 
 ```sh
-cd app && flutter_rust_bridge_codegen generate
+cd app && ../.tools/bin/flutter_rust_bridge_codegen generate
 ```
 
-The codegen tool is installed with
-`cargo install flutter_rust_bridge_codegen --version 2.13.0 --locked`. Its
+`scripts/install-tools.sh` installs the codegen tool into `.tools/` (D20). Its
 version must match the `flutter_rust_bridge` crate and Dart package.
+
+## CI (local, D18)
+
+There is no GitHub Actions workflow. Before pushing, run:
+
+```sh
+scripts/ci.sh            # this Mac, then the Linux and Windows hosts
+scripts/ci.sh local      # just this machine (fmt, clippy, tests, cargo-deny)
+scripts/ci.sh linux      # or: windows
+scripts/ci.sh clean      # remove ~/passingover-ci from the remote hosts
+```
+
+The remote hosts are set in the git-ignored `.ci-hosts.local`
+(`PASSINGOVER_CI_LINUX`, `PASSINGOVER_CI_WINDOWS`). Never commit host names;
+the repo is public.
+
+## Shared machines
+
+The development and build machines also run other projects in parallel.
+Never affect them:
+
+- On remote hosts, everything for this project stays in `~/passingover-ci`.
+  No loose files in the home directory; temp files have a `passingover`
+  prefix and are removed.
+- Toolchains are additive: rustup installs the pinned version alongside the
+  others. Never run `rustup default`, `rustup update` or system upgrades, and
+  never install shared-named tools globally (use `.tools/`).
+- Set env vars such as `CARGO_TARGET_DIR` per command, never globally.
+- Mention any system package you install (apt, winget, brew) to the owner.
 
 ## Testing rules
 
@@ -130,8 +162,9 @@ version must match the `flutter_rust_bridge` crate and Dart package.
 
 - Log every non-trivial choice in `docs/decisions.md` as the next Dn, with a
   one-line rationale. Update `docs/milestones.md` status as work lands.
-- Small, reviewable commits with clear messages, on `main`. No remote: never
-  create one or push.
+- Small, reviewable commits with clear messages, on `main`. The remote is
+  `origin` → `github.com/datstma/passingover` (public). Run `scripts/ci.sh`
+  before pushing, and push only when the owner asks.
 - Commits are authored and committed as **Stefan Månsby** (the repo-local git
   identity). No AI co-author trailers (`Co-Authored-By: Claude …`), no
   "Generated with …" lines, and no other AI attribution in commit messages or
@@ -141,7 +174,7 @@ version must match the `flutter_rust_bridge` crate and Dart package.
   missing (Flutter SDK, Xcode, Android SDK, Rust targets), say exactly what to
   install rather than working around it.
 - Toolchain bumps: change `rust-toolchain.toml` and
-  `app/rust/rust-toolchain.toml` together (CI checks this once `app/` exists),
-  and log a decision.
+  `app/rust/rust-toolchain.toml` together (`scripts/ci.sh` should check this
+  once `app/` exists), and log a decision.
 - Generated files (`app/lib/src/rust/**`, `app/rust/src/frb_generated.rs`) are
   regenerated, never hand-edited.
