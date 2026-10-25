@@ -22,7 +22,8 @@ Flutter; all the logic lives in a Rust core that also powers a small CLI.
 
 ## Status
 
-Early development. The CLI works (milestone M1); the Flutter app (M0/M2) is next. See
+Early development. The CLI works (M1), and the Flutter app runs on macOS and
+Windows with the Rust core wired in (M0). The first real app screen is M2. See
 [docs/milestones.md](docs/milestones.md).
 
 ## Building

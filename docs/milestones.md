@@ -32,19 +32,19 @@ Linux and Windows (local CI on the owner's machines, D18).
 - [x] Repo hygiene: issue/PR templates, SECURITY.md, code of conduct,
       .editorconfig, .gitattributes
 - [x] `flutter_rust_bridge_codegen` 2.13.0 in `.tools/` via `scripts/install-tools.sh` (D20)
-- [ ] **Blocked: Flutter SDK 3.47.8 not installed on the dev machine**
-- [ ] Flutter app in `app/` for macOS, Windows, Linux, iOS, Android
-      (`flutter create --org se.mansby --project-name passingover`)
-- [ ] flutter_rust_bridge wired up: `flutter_rust_bridge_codegen integrate
-      --integration-backend native-assets` (D7). Bridge crate in `app/rust`,
-      added to the root workspace, with `rust-toolchain.toml` pinned to the
-      same channel as the root
-- [ ] "Hello from Rust core" shown in the app on macOS desktop
-- [ ] `scripts/ci.sh`: Flutter stage on macOS, Linux (xvfb), Windows: `pub
-      get`, `analyze`, `test`, `build <desktop> --debug`, `test
-      integration_test -d <desktop>` (calls into Rust). Fail if the two
-      `rust-toolchain.toml` channels differ. Linux needs clang, cmake, ninja,
-      pkg-config, libgtk-3-dev and xvfb on the build host (ask first)
+- [x] Flutter app in `app/` for macOS, Windows, Linux, iOS, Android
+      (`se.mansby.passingover`), Flutter 3.47.8
+- [x] flutter_rust_bridge wired up with the Native Assets backend (D7); bridge
+      crate `passingover_bridge` in `app/rust`, in the root workspace (D27)
+- [x] "Hello from Rust core" shown in the app on macOS desktop; integration
+      test passes on macOS and Windows; macOS release build is universal
+- [x] `scripts/ci.sh`: Flutter stage locally (pins, bindings, analyze, tests,
+      integration test) and on Windows (analyze, tests, build, integration
+      test) with a project-pinned SDK (D28)
+- [ ] **Waiting: Linux Flutter stage.** The Linux build host is 98 % full
+      (5.5 GB free on 2026-10-26); the SDK and build need about 4–5 GB, plus
+      clang, cmake and ninja-build. Run `scripts/ci.sh setup linux` once
+      there is room
 
 ## M1 — Core + CLI
 

@@ -61,9 +61,9 @@ passingover/
 │   └── passingover-cli/    # `passingover` binary
 ├── xtask/                  # `cargo xtask data`: builds data/ from VRS (D24)
 ├── data/                   # GENERATED, git-ignored: routes/airports/airlines
-├── app/                    # Flutter app (all five platforms) — NOT YET CREATED, see M0
+├── app/                    # Flutter app (all five platforms)
 │   ├── hook/build.dart     # builds app/rust via native_toolchain_rust
-│   ├── rust/               # thin flutter_rust_bridge crate → passingover-core
+│   ├── rust/               # passingover_bridge: thin frb crate → passingover-core (D27)
 │   ├── lib/src/rust/       # GENERATED Dart bindings — do not edit
 │   └── integration_test/   # runs the app and calls into Rust
 ├── design/                 # design system (placeholder)
@@ -139,9 +139,13 @@ There is no GitHub Actions workflow. Before pushing, run:
 
 ```sh
 scripts/ci.sh            # this Mac, then the Linux and Windows hosts
-scripts/ci.sh local      # just this machine (fmt, clippy, tests, cargo-deny)
-scripts/ci.sh linux      # or: windows
-scripts/ci.sh clean      # remove ~/passingover-ci from the remote hosts
+scripts/ci.sh local      # Rust (fmt, clippy, tests, cargo-deny) + Flutter
+                         # (pins, bindings current, analyze, tests, macOS
+                         # integration test); needs flutter on PATH
+scripts/ci.sh linux      # or: windows — Rust, then Flutter if set up there
+scripts/ci.sh setup windows   # install the pinned Flutter SDK on a host (D28)
+scripts/ci.sh clean      # remove sources and build output on the hosts
+scripts/ci.sh purge      # remove ~/passingover-ci (incl. Flutter SDK) entirely
 ```
 
 The remote hosts are set in the git-ignored `.ci-hosts.local`
@@ -159,6 +163,8 @@ Never affect them:
 - Toolchains are additive: rustup installs the pinned version alongside the
   others. Never run `rustup default`, `rustup update` or system upgrades, and
   never install shared-named tools globally (use `.tools/`).
+- Remote hosts use our own Flutter SDK in `~/passingover-ci/flutter`, never
+  a Flutter that another project installed (D28).
 - Set env vars such as `CARGO_TARGET_DIR` per command, never globally.
 - Mention any system package you install (apt, winget, brew) to the owner.
 
@@ -184,7 +190,7 @@ Never affect them:
   missing (Flutter SDK, Xcode, Android SDK, Rust targets), say exactly what to
   install rather than working around it.
 - Toolchain bumps: change `rust-toolchain.toml` and
-  `app/rust/rust-toolchain.toml` together (`scripts/ci.sh` should check this
-  once `app/` exists), and log a decision.
+  `app/rust/rust-toolchain.toml` together (`scripts/ci.sh local` checks),
+  and log a decision.
 - Generated files (`app/lib/src/rust/**`, `app/rust/src/frb_generated.rs`) are
   regenerated, never hand-edited.
