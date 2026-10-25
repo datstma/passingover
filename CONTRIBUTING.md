@@ -26,7 +26,9 @@ the direction.
 cargo fmt --all
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-cargo run -p passingover-cli -- hello
+cargo xtask data                          # build data/ (route and airport tables)
+cargo run -p passingover-cli -- now --lat 55.68 --lon 12.57
+cargo test -p passingover-core -- --ignored   # opt-in live tests
 
 # Flutter (app/)
 flutter pub get

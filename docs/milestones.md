@@ -5,7 +5,7 @@ Status values: **Not started** · **In progress** · **Done**.
 | # | Milestone | Status |
 |---|---|---|
 | M0 | Foundation | In progress |
-| M1 | Core + CLI | In progress |
+| M1 | Core + CLI | Done |
 | M2 | First app view | Not started |
 | M3 | Daydream enrichment | Not started |
 | M4 | Ambient mode | Not started |
@@ -56,37 +56,39 @@ lines.
 Sources follow D11–D17 and docs/data-sources.md; design follows D21 (sans-IO
 sources, `QueryPoint` privacy) and D22 (SI units).
 
-Done so far:
+Done (D21–D26):
 
-- [x] `Coordinate`, privacy-rounded `QueryPoint`, `Radius`, haversine distance
-- [x] `Aircraft` (SI units) with an `is_flying` filter for ground traffic,
+- [x] `Coordinate`, privacy-rounded `QueryPoint`, `Radius`, distances and bearings
+- [x] `Aircraft` in SI units, with an `is_flying` filter for ground traffic,
       vehicles and towers
-- [x] `PositionSource` trait; adsb.lol and adsb.fi sharing one readsb parser
-- [x] Recorded fixtures for both sources (`crates/passingover-core/tests/fixtures`)
+- [x] `PositionSource` for adsb.lol and adsb.fi sharing one readsb parser
+- [x] HTTP transport (`HttpClient`, `UreqClient`) and `PositionFeed`: one
+      request per source per poll, backoff, rate limits, failover, random
+      primary (D15, D17, D23)
+- [x] Standing data: `cargo xtask data` builds routes, airports (with time
+      zones) and airlines from VRS (D24); loaded and binary-searched in core
+- [x] Routes: VRS callsign normalisation, plausibility check that picks the
+      leg being flown, adsbdb fallback with in-memory cache and rate limit
+- [x] Time-to-landing estimate (D12, D26) and local time at the destination (D25)
+- [x] `passingover now --lat --lon [--radius-km] [--source] [--data]`
+- [x] Recorded fixtures for positions, adsbdb and the data tables; end-to-end
+      fixture test; `#[ignore]` live tests for all three services
 
-Still to do:
-
-- Transport layer (D21) with the politeness rules: User-Agent, timeouts,
-  rate-limit headers, backoff, and the random per-install primary with
-  failover to the other source (D15, D17)
-- Domain types `Airport`, `Route`, `Flight` (aircraft + route + estimates)
-- `RouteSource` trait: bundled VRS standing-data snapshot first, adsbdb live
-  lookup as fallback (in-memory cache only); plausibility check
-- Airport table: a build step (`xtask` or script) that joins VRS airports and
-  OurAirports and adds `tz` via tzf-rs; local time via chrono-tz
-- Time-to-landing estimate (D12)
-- `passingover now --lat --lon [--radius] [--source adsb.lol|adsb.fi]`,
-  printing short "dreamy" lines; metric by default, `--imperial`
-- Fixtures for routes and weather; one `#[ignore]` live test
-- Before release, not blocking M1: introduce the project to the adsb.lol
-  operator (key form or IRC) and to adsb.fi (and confirm app-store
-  distribution is OK), without waiting on replies
+Moved on: daily request budgets and pausing while hidden belong to the app
+(M2); imperial units arrive with the first values that have units (weather,
+M3); introducing the project to the source operators happens before release
+(M7).
 
 ## M2 — First app view
 
 A Flutter "Now" screen showing the flights overhead with destination, local
 time there and time to landing. Runs on desktop, iOS and Android. Device
 location in the app, with manual lat/lon as a fallback.
+
+- How the app gets the standing data (bundled asset or download, D24)
+- Count requests per source per day on the device and slow down near the
+  limits; pause polling while the view is hidden (D15)
+- Store the randomly chosen primary source once per install (D17)
 
 ## M3 — Daydream enrichment
 

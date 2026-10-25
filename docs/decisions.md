@@ -301,3 +301,55 @@ Field names carry the unit (`baro_altitude_m`, `ground_speed_mps`).
 
 **Why:** one unit system inside rules out mixed-unit bugs; the unit in the
 name makes every value self-explaining.
+
+### D23 — Blocking HTTP with ureq, behind a cargo feature
+*2026-10-26 · Accepted*
+
+The core's `HttpClient` trait has one implementation, `UreqClient` (ureq 3,
+blocking), behind the default `http` feature. It uses rustls with ring and
+the bundled Mozilla root certificates (webpki-roots), gzip, an identifying
+User-Agent and 5 s connect / 10 s total timeouts, and it reports every HTTP
+status instead of treating 4xx/5xx as errors. Callers run it off the UI
+thread; a future WASM build turns the feature off and supplies its own
+client.
+
+**Why:** a blocking client keeps the core free of an async runtime. Bundled
+roots work the same on all five platforms with no per-platform certificate
+setup (Android's platform verifier needs extra Kotlin/JNI wiring).
+
+### D24 — Standing data built locally from VRS; not committed
+*2026-10-26 · Accepted · Refines D14*
+
+`cargo xtask data` shallow-clones the VRS standing data into
+`target/xtask/`, adds an IANA time zone to every airport with tzf-rs, and
+writes `routes.tsv` (sorted for binary search), `airports.tsv`,
+`airlines.tsv`, `manifest.json` and `NOTICE.md` to the git-ignored `data/`.
+The VRS airports alone cover every airport the routes use, with city
+names, so OurAirports is left out until real gaps show up (D14 named it
+as a gap filler). A small subset of the tables is committed as test
+fixtures. How app and CLI users get the data (bundled assets, release
+downloads) is decided in M2.
+
+**Why:** the tables are ~15 MB and change daily upstream; committing them
+would bloat history. The build takes seconds and records the VRS commit it
+used.
+
+### D25 — Local time with jiff and a bundled time-zone database
+*2026-10-26 · Accepted*
+
+"It's 15:12 there" uses jiff with `tzdb-bundle-always`, so the IANA
+database ships inside the core.
+
+**Why:** identical results on every platform, independent of each OS's
+zoneinfo (Windows has none; Android and iOS differ).
+
+### D26 — Landing estimate details
+*2026-10-26 · Accepted · Details D12*
+
+Within 100 km of the destination: the aircraft's ground speed (at least
+120 kt) plus 5 min for landing. Further out: its ground speed if it is
+cruising (FL250 or above and at least 250 kt), otherwise 450 kt, plus 15 min
+for descent and approach. Rounded to 5 min and shown as "about".
+
+**Why:** simple, explainable and good to tens of minutes on long flights,
+which is all a daydream needs.

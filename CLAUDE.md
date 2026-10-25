@@ -59,6 +59,8 @@ passingover/
 ├── crates/
 │   ├── passingover-core/   # pure Rust: sources, filtering, enrichment, stories
 │   └── passingover-cli/    # `passingover` binary
+├── xtask/                  # `cargo xtask data`: builds data/ from VRS (D24)
+├── data/                   # GENERATED, git-ignored: routes/airports/airlines
 ├── app/                    # Flutter app (all five platforms) — NOT YET CREATED, see M0
 │   ├── hook/build.dart     # builds app/rust via native_toolchain_rust
 │   ├── rust/               # thin flutter_rust_bridge crate → passingover-core
@@ -101,8 +103,16 @@ cargo build --workspace
 cargo test --workspace                                  # fixtures only, no network
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all
-cargo run -p passingover-cli -- hello
+cargo xtask data                                        # build data/ (needs git + network)
+cargo run -p passingover-cli -- now --lat 55.68 --lon 12.57
+cargo test -p passingover-core -- --ignored             # opt-in live tests (network)
 ```
+
+Core modules: `geo` (coordinates, `QueryPoint` privacy rounding), `aircraft`,
+`position` (sources + `PositionFeed`), `http` (`HttpClient`, `UreqClient`),
+`polite` (D15 numbers), `data` (standing data tables), `route` (normalisation,
+plausibility, adsbdb, `RouteLookup`), `flight` (overhead, landing estimate,
+local time), `story` (dreamy lines).
 
 Flutter (from `app/`):
 

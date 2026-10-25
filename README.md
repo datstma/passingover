@@ -22,7 +22,7 @@ Flutter; all the logic lives in a Rust core that also powers a small CLI.
 
 ## Status
 
-Early development. Milestone **M0 (foundation)** is in progress; see
+Early development. The CLI works (milestone M1); the Flutter app (M0/M2) is next. See
 [docs/milestones.md](docs/milestones.md).
 
 ## Building
@@ -39,8 +39,20 @@ Prerequisites:
 CLI:
 
 ```sh
-cargo run -p passingover-cli -- hello
+cargo xtask data       # once: build the route and airport tables in data/
+cargo run -p passingover-cli -- now --lat 55.68 --lon 12.57
 ```
+
+```text
+SK 588 → Copenhagen. It's 00:00 there. Landing in about 10 min.
+CZ 674 → Beijing. It's 07:00 there. Landing in about 7 h 30 min.
+
+Aircraft data: adsb.lol (ODbL), https://adsb.lol. Routes: VRS standing data.
+```
+
+Your location is rounded to about 1 km before it's sent to the aircraft
+data source. Route lookups that aren't in the local tables send only the
+flight's callsign, never your location.
 
 App (from `app/`):
 
