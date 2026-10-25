@@ -30,3 +30,15 @@ fn both_position_sources_answer() {
         assert_eq!(snapshot.source, primary, "{primary:?} did not answer");
     }
 }
+
+#[test]
+#[ignore = "live network"]
+fn adsbdb_knows_a_long_standing_route() {
+    use passingover_core::route::{RouteLookup, RouteSourceId};
+
+    let info = RouteLookup::new()
+        .lookup("SAS945", None, Some(&client()), Instant::now())
+        .expect("adsbdb answered");
+    assert_eq!(info.source, RouteSourceId::AdsbDb);
+    assert_eq!(info.airports.len(), 2);
+}
