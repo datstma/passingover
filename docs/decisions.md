@@ -249,7 +249,8 @@ rustup's symlinked proxies can't be followed from an elevated SSH shell.
 
 **Why:** the owner's choice; real hardware for all three desktop platforms is
 at hand, and the Mac does the Apple builds. Trade-off: pull requests are not
-checked automatically, so maintainers run the script before merging.
+checked automatically, so maintainers run the script before merging. GitHub
+Actions is disabled in the repository settings.
 
 ### D19 — Dependency policy with cargo-deny
 *2026-10-25 · Accepted*
@@ -274,3 +275,29 @@ checked on every `scripts/ci.sh` run.
 
 **Why:** the development machines host other projects that may need other
 versions of the same tools; a repo-local install can't collide with them.
+
+### D21 — Sans-IO sources, and privacy enforced by types
+*2026-10-25 · Accepted*
+
+A source never does I/O. `PositionSource` (and later `RouteSource`,
+`WeatherSource`) builds a `Request` (a URL) for an `Area` and parses a
+response body into domain types. One transport layer, still to be written,
+sends requests and owns the User-Agent, timeouts, rate-limit headers, backoff
+and failover (D15, D17). An `Area` can only be built from a `QueryPoint`, and
+the only way to get a `QueryPoint` is to round a `Coordinate` to 2 decimals,
+so a precise location can't reach a source by accident.
+
+**Why:** fixture tests need no network or mocks; the core stays independent
+of any async runtime or HTTP client, so the CLI, the Flutter bridge and a
+future WASM build can each use what suits them; politeness lives in one place.
+
+### D22 — SI units inside the core
+*2026-10-25 · Accepted*
+
+The core stores metres, metres per second, degrees and `SystemTime` (UTC).
+Sources convert on the way in (readsb sends feet, knots and feet per minute),
+and front ends convert on the way out: metric by default, imperial on request.
+Field names carry the unit (`baro_altitude_m`, `ground_speed_mps`).
+
+**Why:** one unit system inside rules out mixed-unit bugs; the unit in the
+name makes every value self-explaining.

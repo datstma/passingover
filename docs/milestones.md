@@ -5,7 +5,7 @@ Status values: **Not started** · **In progress** · **Done**.
 | # | Milestone | Status |
 |---|---|---|
 | M0 | Foundation | In progress |
-| M1 | Core + CLI | Not started |
+| M1 | Core + CLI | In progress |
 | M2 | First app view | Not started |
 | M3 | Daydream enrichment | Not started |
 | M4 | Ambient mode | Not started |
@@ -53,23 +53,31 @@ filters them, and enriches them with route and airport data.
 `passingover now --lat --lon` prints the flights overhead as short "dreamy"
 lines.
 
-Sources follow D11–D17 and docs/data-sources.md.
+Sources follow D11–D17 and docs/data-sources.md; design follows D21 (sans-IO
+sources, `QueryPoint` privacy) and D22 (SI units).
 
-- Domain types in core: `Coordinate` (with ~1 km rounding), `Aircraft`,
-  `Airport`, `Route`, `Flight` (aircraft + route + estimates)
-- `PositionSource` trait with adsb.lol and adsb.fi implementations sharing
-  one readsb v2 parser; a random per-install primary with the other as
-  fallback (D17); filter out ground traffic and non-aircraft
+Done so far:
+
+- [x] `Coordinate`, privacy-rounded `QueryPoint`, `Radius`, haversine distance
+- [x] `Aircraft` (SI units) with an `is_flying` filter for ground traffic,
+      vehicles and towers
+- [x] `PositionSource` trait; adsb.lol and adsb.fi sharing one readsb parser
+- [x] Recorded fixtures for both sources (`crates/passingover-core/tests/fixtures`)
+
+Still to do:
+
+- Transport layer (D21) with the politeness rules: User-Agent, timeouts,
+  rate-limit headers, backoff, and the random per-install primary with
+  failover to the other source (D15, D17)
+- Domain types `Airport`, `Route`, `Flight` (aircraft + route + estimates)
 - `RouteSource` trait: bundled VRS standing-data snapshot first, adsbdb live
   lookup as fallback (in-memory cache only); plausibility check
 - Airport table: a build step (`xtask` or script) that joins VRS airports and
   OurAirports and adds `tz` via tzf-rs; local time via chrono-tz
 - Time-to-landing estimate (D12)
-- Politeness layer: User-Agent, timeouts, rate-limit headers, backoff, source
-  failover (D15)
 - `passingover now --lat --lon [--radius] [--source adsb.lol|adsb.fi]`,
   printing short "dreamy" lines; metric by default, `--imperial`
-- Unit tests on recorded JSON fixtures; one `#[ignore]` live test
+- Fixtures for routes and weather; one `#[ignore]` live test
 - Before release, not blocking M1: introduce the project to the adsb.lol
   operator (key form or IRC) and to adsb.fi (and confirm app-store
   distribution is OK), without waiting on replies
