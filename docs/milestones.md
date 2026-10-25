@@ -26,7 +26,7 @@ Linux and Windows.
 - [x] Licenses (MIT, Apache-2.0)
 - [x] Rust workspace: `passingover-core`, `passingover-cli` (`passingover hello`)
 - [x] Docs: CLAUDE.md, README, CONTRIBUTING, decisions, milestones, design placeholder
-- [x] docs/data-sources.md: first research pass; source decisions D10–D15
+- [x] docs/data-sources.md: first research pass; source decisions D10–D15 (D10 since superseded by D17)
 - [x] CI: Rust job (fmt, clippy `-D warnings`, test) on macOS, Linux, Windows
 - [x] `flutter_rust_bridge_codegen` 2.13.0 installed locally
 - [ ] **Blocked: Flutter SDK 3.47.8 not installed on the dev machine**
@@ -49,13 +49,13 @@ filters them, and enriches them with route and airport data.
 `passingover now --lat --lon` prints the flights overhead as short "dreamy"
 lines.
 
-Sources follow D10–D15 and docs/data-sources.md.
+Sources follow D11–D17 and docs/data-sources.md.
 
 - Domain types in core: `Coordinate` (with ~1 km rounding), `Aircraft`,
   `Airport`, `Route`, `Flight` (aircraft + route + estimates)
-- `PositionSource` trait with an adsb.lol implementation and an adsb.fi
-  fallback, sharing one readsb v2 parser; filter out ground traffic and
-  non-aircraft
+- `PositionSource` trait with adsb.lol and adsb.fi implementations sharing
+  one readsb v2 parser; a random per-install primary with the other as
+  fallback (D17); filter out ground traffic and non-aircraft
 - `RouteSource` trait: bundled VRS standing-data snapshot first, adsbdb live
   lookup as fallback (in-memory cache only); plausibility check
 - Airport table: a build step (`xtask` or script) that joins VRS airports and
@@ -63,11 +63,12 @@ Sources follow D10–D15 and docs/data-sources.md.
 - Time-to-landing estimate (D12)
 - Politeness layer: User-Agent, timeouts, rate-limit headers, backoff, source
   failover (D15)
-- `passingover now --lat --lon [--radius]`, printing short "dreamy" lines;
-  metric by default, `--imperial`
+- `passingover now --lat --lon [--radius] [--source adsb.lol|adsb.fi]`,
+  printing short "dreamy" lines; metric by default, `--imperial`
 - Unit tests on recorded JSON fixtures; one `#[ignore]` live test
-- Before release, not blocking M1: ask the adsb.lol operator about the
-  500/day header and app use, and adsb.fi about app-store distribution
+- Before release, not blocking M1: introduce the project to the adsb.lol
+  operator (key form or IRC) and to adsb.fi (and confirm app-store
+  distribution is OK), without waiting on replies
 
 ## M2 — First app view
 

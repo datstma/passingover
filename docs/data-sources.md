@@ -38,8 +38,8 @@ Constraints that shape the choice:
 
 | Source | Category | Auth / key | Rate limit | License / terms | Commercial use | Attribution required | Direct from client OK? | Verdict |
 |---|---|---|---|---|---|---|---|---|
-| [adsb.lol](#adsblol) | Positions (+ routes, airports) | None today; docs say a key "by feeding" will be required in future | Headers seen: 4/s, 60/min, **500/day** per client (enforcement of the daily figure unverified) | ODbL 1.0 | Allowed by ODbL; operator asks production users to contact them | Yes (ODbL) | Technically yes; no statement on apps; "production" use: contact | **Primary for positions**, contact the operator |
-| [adsb.fi](#adsbfi) | Positions | None | 1 req/s (public endpoints); 4xx responses count | adsb.fi terms | **No**: personal, non-commercial only | Yes: cite adsb.fi and link to it | Not addressed; personal use OK | **Fallback for positions** while free/non-commercial |
+| [adsb.lol](#adsblol) | Positions (+ routes, airports) | None today; docs say a key "by feeding" will be required in future | Headers seen: 4/s, 60/min, **500/day** per client (enforcement of the daily figure unverified) | ODbL 1.0 | Allowed by ODbL; operator asks production users to contact them | Yes (ODbL) | Technically yes; no statement on apps; "production" use: contact | **Positions**: half of installs as primary (D17) |
+| [adsb.fi](#adsbfi) | Positions | None | 1 req/s (public endpoints); 4xx responses count | adsb.fi terms | **No**: personal, non-commercial only | Yes: cite adsb.fi and link to it | Not addressed; personal use OK | **Positions**: half of installs as primary (D17); fits non-commercial terms (D16) |
 | [OpenSky Network](#opensky-network) | Positions | Anonymous allowed for `/states/all`; accounts use OAuth2 client credentials | Anonymous: 400 credits/day per IP (≈400 small requests) | OpenSky terms | **No** without written licence | Cite paper in publications | Terms appear to require a written agreement for use in a live product (**unverified**, page blocked) | Not for v1 |
 | [airplanes.live](#airplaneslive) | Positions | Our requests got HTTP 403 "contact us" | n/a | Non-commercial (**unverified**) | Unverified | Unverified | **No** (refused in test) | Not usable |
 | [ADS-B Exchange](#ads-b-exchange) | Positions | RapidAPI key, US$10/month | 10,000 requests | Non-commercial on that plan | Enterprise licence | — | No (key) | Not usable in v1 |
@@ -584,7 +584,7 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
 
 | Category | Primary | Fallback | Why |
 |---|---|---|---|
-| Positions | **adsb.lol** `/v2/point` | **adsb.fi** `/api/v3/lat/…/lon/…/dist/…` | Same JSON shape, one parser. adsb.lol's ODbL allows commercial use and has the clearest license; adsb.fi has no daily cap but is personal/non-commercial only. Tell the adsb.lol operator before release via the key form or IRC (production use, the 500/day header, the planned key), but don't count on a reply (see "Operator stance"). There is no paid tier (D16), so adsb.fi's non-commercial terms fit; still confirm that app-store distribution of a free app is OK. |
+| Positions | **adsb.lol** `/v2/point` or **adsb.fi** `/api/v3/lat/…/lon/…/dist/…`, picked at random per install (D17) | the other of the two | Same JSON shape, one parser. Splitting installs between two hobby operators roughly halves the load on each, and we don't depend on an exception from either (see adsb.lol's "Operator stance"). With no paid tier (D16), adsb.fi's non-commercial terms fit. Before release, introduce the project to both operators without waiting on a reply, and confirm with adsb.fi that app-store distribution of a free app is OK. |
 | Routes | **VRS standing data**, bundled (CC0) | **adsbdb** online lookup, short in-memory cache | VRS is public domain, updated daily, and offline: no per-user requests and no location leaves the device. adsbdb covers callsigns VRS lacks but its route data may not be stored or redistributed. Both need the plausibility check. |
 | Arrival time | **Estimate** from remaining great-circle distance ÷ ground speed + ~15 min | none | No free keyless source exists; keyed APIs need a proxy and have tiny quotas. |
 | Weather | **Open-Meteo** (free, non-commercial) | **MET Norway** Locationforecast | Open-Meteo is keyless, global, simple, and also returns the time zone. MET Norway allows commercial use and is the fallback, but its terms discourage direct client calls at scale and cap the whole app at 20 req/s. If a paid tier comes: Open-Meteo paid plan behind a proxy, or MET Norway behind a proxy. METAR from aviationweather.gov is an optional extra for observed conditions. |
@@ -598,6 +598,7 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
 | Position poll | Every **15 s** while the view is visible; never under **10 s**; ±2 s jitter. Pause when hidden, backgrounded, minimised or the screen is locked (MET's terms require this for mobile; it is good manners everywhere). |
 | Ambient mode (M4) | **60 s**, or 30 s at most, until a source agrees to more. At 15 s a full day is 5,760 requests, far above the 500/day adsb.lol header and OpenSky's 400 anonymous credits. |
 | Radius | Default **20 nm (≈37 km)**; user range 5–25 nm. One request covers everything; never tile several requests. |
+| Position source | Each install picks adsb.lol or adsb.fi as primary at random (50/50) on first launch and keeps it locally; the other is the fallback (D17). The CLI picks per run unless `--source` is given. |
 | Coordinates sent | Round to **2 decimals** (0.01° ≈ 1.1 km north–south, less east–west) before any request. Weather and route requests carry only destination airport data or callsigns, never the user's position. |
 | Daily budget | Count requests per source per day on the device. Read `x-ratelimit-*` (adsb.lol) and `X-Rate-Limit-Remaining` (OpenSky). Switch to the fallback or slow to 60 s when below 10 % left. |
 | Route cache | Bundled VRS snapshot; check for a new snapshot at most **once a day** with `If-None-Match`; publish a new one **weekly**. Online fallback (adsbdb): positive results **12 h** in memory only, negative results **6 h**, one lookup per new callsign, at most **10 lookups/min**. |
@@ -620,8 +621,8 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
    spread the load across sources, poll gently, and treat a future key
    requirement as "adsb.lol drops out" unless a proxy exists.
 2. **adsb.fi is personal, non-commercial only.** Ask whether a free
-   open-source app in app stores qualifies. It cannot stay as a source in a paid
-   tier without an agreement.
+   open-source app in app stores qualifies. There is no paid tier (D16), so
+   the non-commercial condition itself is met.
 3. **airplanes.live refused anonymous requests** (403, "contact us"). Its
    terms are unverified.
 4. **OpenSky terms** appear to require a written agreement for a live product,

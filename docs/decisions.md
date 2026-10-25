@@ -113,7 +113,7 @@ derive API. M0 has `hello` and `--version`; M1 adds `now --lat --lon`.
 **Why:** clap is the de-facto standard and keeps subcommands declarative.
 
 ### D10 — Live positions: adsb.lol primary, adsb.fi fallback
-*2026-10-25 · Accepted for development; confirm with operators before release*
+*2026-10-25 · Superseded by D17*
 
 `PositionSource` implementations for adsb.lol (`/v2/point/{lat}/{lon}/{nm}`)
 and adsb.fi (`/api/v3/lat/…/lon/…/dist/…`). Both return the readsb v2 JSON
@@ -203,3 +203,32 @@ commercial offering.
 **Why:** the owner's intent. It also means the non-commercial terms of
 community data sources (adsb.fi, Open-Meteo's free API) fit the project,
 which removes the "commercial path" risk from docs/data-sources.md.
+
+### D17 — Live positions: spread the load across adsb.lol and adsb.fi
+*2026-10-25 · Accepted (owner) · Supersedes D10*
+
+- Both sources sit behind `PositionSource` and share one readsb v2 parser.
+- Each install picks its primary source at random (50/50) on first launch and
+  keeps it in local settings; the other source is its fallback. The choice is
+  never sent anywhere. The weights are constants in core, so a release can
+  shift load if an operator asks. The user can override the choice (an app
+  setting; `--source` in the CLI, which otherwise picks at random per run).
+- Failover follows D15: switch after 3 consecutive failures, on 401/403/429,
+  or when rate-limit headers show less than 10 % remaining; retry the primary
+  every 5 min.
+- Stay well inside each source's stated limits (adsb.fi: 1 request/s per IP;
+  adsb.lol: whatever its `x-ratelimit-*` headers say). Poll only while the
+  view is visible; ambient mode is slower (D15).
+- Both sources are credited on the "About data" screen, since either may serve
+  a given user.
+- Before the first public release, introduce the project to both operators
+  (adsb.lol through its key form or IRC; adsb.fi through its listed contact),
+  without blocking on a reply.
+
+**Why:** adsb.lol is a one-person hobby service whose operator states there
+are no guarantees of API access or support and doesn't answer production-use
+requests (docs/data-sources.md, "Operator stance"), so the design must not
+depend on an exception. With no paid tier (D16), adsb.fi's personal,
+non-commercial terms fit. Splitting installs between the two roughly halves
+the load on each, and either source alone can still carry everyone if the
+other disappears.
