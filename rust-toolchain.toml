@@ -1,0 +1,6 @@
+# Pinned so local builds, CI and the Flutter build hook all use the same compiler.
+# Keep `channel` in sync with app/rust/rust-toolchain.toml (CI checks this).
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
+components = ["rustfmt", "clippy"]

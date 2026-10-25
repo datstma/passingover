@@ -1,0 +1,20 @@
+[package]
+name = "passingover-cli"
+description = "Command-line front end for Passing Over: where the planes above you are going."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[[bin]]
+name = "passingover"
+path = "src/main.rs"
+
+[dependencies]
+passingover-core.workspace = true
+clap.workspace = true
+
+[lints]
+workspace = true
