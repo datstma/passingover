@@ -20,15 +20,18 @@ Status values: **Not started** · **In progress** · **Done**.
 Docs written; the Rust workspace builds; the Flutter app exists with
 flutter_rust_bridge wired up; a "hello from Rust core" call works on macOS
 desktop; CI builds and tests the Rust workspace and the Flutter app on macOS,
-Linux and Windows.
+Linux and Windows (local CI on the owner's machines, D18).
 
-- [x] Git repository on `main` (no remote)
+- [x] Git repository on `main`, published at github.com/datstma/passingover
 - [x] Licenses (MIT, Apache-2.0)
 - [x] Rust workspace: `passingover-core`, `passingover-cli` (`passingover hello`)
 - [x] Docs: CLAUDE.md, README, CONTRIBUTING, decisions, milestones, design placeholder
 - [x] docs/data-sources.md: first research pass; source decisions D10–D15 (D10 since superseded by D17)
-- [x] CI: Rust job (fmt, clippy `-D warnings`, test) on macOS, Linux, Windows
-- [x] `flutter_rust_bridge_codegen` 2.13.0 installed locally
+- [x] CI: `scripts/ci.sh` runs fmt, clippy `-D warnings`, tests and cargo-deny
+      on this Mac and clippy + tests on the Linux and Windows hosts (D18, D19)
+- [x] Repo hygiene: issue/PR templates, SECURITY.md, code of conduct,
+      .editorconfig, .gitattributes
+- [x] `flutter_rust_bridge_codegen` 2.13.0 in `.tools/` via `scripts/install-tools.sh` (D20)
 - [ ] **Blocked: Flutter SDK 3.47.8 not installed on the dev machine**
 - [ ] Flutter app in `app/` for macOS, Windows, Linux, iOS, Android
       (`flutter create --org se.mansby --project-name passingover`)
@@ -37,10 +40,11 @@ Linux and Windows.
       added to the root workspace, with `rust-toolchain.toml` pinned to the
       same channel as the root
 - [ ] "Hello from Rust core" shown in the app on macOS desktop
-- [ ] CI: Flutter job on macOS, Linux (xvfb), Windows: `pub get`, `analyze`,
-      `test`, `build <desktop> --debug`, `test integration_test -d <desktop>`
-      (calls into Rust); install the pinned toolchain in `app/rust` first. Add
-      a job that fails if the two `rust-toolchain.toml` channels differ
+- [ ] `scripts/ci.sh`: Flutter stage on macOS, Linux (xvfb), Windows: `pub
+      get`, `analyze`, `test`, `build <desktop> --debug`, `test
+      integration_test -d <desktop>` (calls into Rust). Fail if the two
+      `rust-toolchain.toml` channels differ. Linux needs clang, cmake, ninja,
+      pkg-config, libgtk-3-dev and xvfb on the build host (ask first)
 
 ## M1 — Core + CLI
 
