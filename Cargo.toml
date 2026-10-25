@@ -16,6 +16,9 @@ homepage = "https://github.com/datstma/passingover"
 [workspace.dependencies]
 passingover-core = { path = "crates/passingover-core", version = "0.1.0" }
 clap = { version = "4.6", features = ["derive"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

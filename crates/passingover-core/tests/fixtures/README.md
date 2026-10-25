@@ -1,0 +1,30 @@
+# Test fixtures
+
+Recorded API responses used by the tests. Tests never touch the network.
+
+## positions/
+
+Each file is one unmodified response, recorded on 2026-10-25 around
+Copenhagen Airport (EKCH), a public location, with a 10 nm radius and the
+User-Agent `PassingOver/0.1 (+https://github.com/datstma/passingover)`.
+
+| File | Request |
+|---|---|
+| `adsb_lol_point_ekch_10nm.json` | `GET https://api.adsb.lol/v2/point/55.62/12.66/10` |
+| `adsb_fi_v3_ekch_10nm.json` | `GET https://opendata.adsb.fi/api/v3/lat/55.62/lon/12.66/dist/10` |
+
+They contain aircraft in the air, aircraft on the ground, ground vehicles and
+towers, which are the cases the parser and filters need to handle.
+
+## Licenses and attribution
+
+These data files are **not** covered by the project's MIT/Apache-2.0 license.
+
+- `adsb_lol_*`: data © adsb.lol contributors, made available under the
+  [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/)
+  by [adsb.lol](https://adsb.lol).
+- `adsb_fi_*`: data from [adsb.fi](https://adsb.fi), used under its open data
+  terms (personal, non-commercial use, attribution with a link).
+
+To record a new fixture, make one request with the project User-Agent at a
+public location, save the body unmodified, and add it to the tables above.

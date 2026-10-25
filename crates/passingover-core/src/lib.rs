@@ -4,6 +4,13 @@
 //! (`passingover-cli`), by the Flutter app through a thin
 //! flutter_rust_bridge wrapper (`app/rust`), and by tests.
 
+pub mod aircraft;
+pub mod geo;
+pub mod position;
+
+pub use aircraft::Aircraft;
+pub use geo::{Coordinate, GeoError, QueryPoint, Radius};
+
 /// Version of the core crate, as set in Cargo.toml.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
