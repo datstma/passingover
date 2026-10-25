@@ -81,6 +81,8 @@ run_linux() {
     tar -xf \"\$root/inbox/src.tar\" -C \"\$root/src\" && rm \"\$root/inbox/src.tar\"
     cd \"\$root/src\"
     export CARGO_TARGET_DIR=\"\$root/target\"
+    # Shared hosts: no debug info or incremental caches, to save disk.
+    export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0
     cargo $clippy_args
     cargo $test_args"
 }
@@ -101,6 +103,8 @@ run_windows() {
     Remove-Item (Join-Path \$root 'inbox/src.tar')
     Set-Location \$src
     \$env:CARGO_TARGET_DIR = Join-Path \$root 'target'
+    # Shared hosts: no debug info or incremental caches, to save disk.
+    \$env:CARGO_INCREMENTAL = '0'; \$env:CARGO_PROFILE_DEV_DEBUG = '0'; \$env:CARGO_PROFILE_TEST_DEBUG = '0'
     # rustup's proxies (cargo.exe, rustc.exe) may be symlinks that an elevated
     # SSH session refuses to follow, so put the pinned toolchain's own bin
     # directory first on PATH for this session only.
