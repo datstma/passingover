@@ -22,9 +22,9 @@ Flutter; all the logic lives in a Rust core that also powers a small CLI.
 
 ## Status
 
-Early development. The CLI works (M1), and the Flutter app runs on macOS,
-Linux and Windows with the Rust core wired in (M0). The first real app screen
-is M2. See
+Early development. The CLI works (M1), and the app's first screen shows the
+flights passing over you with where they're going, the local time there and
+when they land (M2), on macOS, Windows, Linux, iOS and Android. See
 [docs/milestones.md](docs/milestones.md).
 
 ## Building
@@ -56,10 +56,11 @@ Your location is rounded to about 1 km before it's sent to the aircraft
 data source. Route lookups that aren't in the local tables send only the
 flight's callsign, never your location.
 
-App (from `app/`):
+App:
 
 ```sh
-flutter run -d macos   # or windows, linux, an iOS simulator, an Android device
+cargo xtask data       # once: bundles the route tables into the app
+cd app && flutter run -d macos   # or windows, linux, an iOS simulator, Android
 ```
 
 More detail is in [CONTRIBUTING.md](CONTRIBUTING.md).

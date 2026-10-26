@@ -6,7 +6,7 @@ Status values: **Not started** · **In progress** · **Done**.
 |---|---|---|
 | M0 | Foundation | Done |
 | M1 | Core + CLI | Done |
-| M2 | First app view | Not started |
+| M2 | First app view | Done |
 | M3 | Daydream enrichment | Not started |
 | M4 | Ambient mode | Not started |
 | M5 | Daydream log | Not started |
@@ -83,10 +83,18 @@ A Flutter "Now" screen showing the flights overhead with destination, local
 time there and time to landing. Runs on desktop, iOS and Android. Device
 location in the app, with manual lat/lon as a fallback.
 
-- How the app gets the standing data (bundled asset or download, D24)
-- Count requests per source per day on the device and slow down near the
-  limits; pause polling while the view is hidden (D15)
-- Store the randomly chosen primary source once per install (D17)
+- [x] Now screen: flight, "→ city", local time there, time to landing,
+      origin; calm states for loading, a quiet sky, errors and no location;
+      credits in the footer and an "About the data" sheet (D30)
+- [x] Standing data bundled as gzipped assets (D29)
+- [x] Polling every 15 ± 2 s, paused while hidden; daily request budget
+      saved across restarts; primary source chosen once per install (D15,
+      D17, D32)
+- [x] Approximate device location, or coordinates typed in (D31)
+- [x] Runs on macOS, Linux and Windows (CI), the iOS simulator and the
+      Android emulator; the opt-in live test passes on macOS, iOS and Android
+- [ ] Hand check on real devices: the location permission prompt and an
+      actual sky full of flights (automated tests use a preset location)
 
 ## M3 — Daydream enrichment
 

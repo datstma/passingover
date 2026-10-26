@@ -379,3 +379,55 @@ lists only the host's own target, so rustup doesn't fetch the other eleven
 
 **Why:** the hosts are shared with other projects (D18); a project-owned SDK
 can't collide with theirs, and `scripts/ci.sh purge` removes it cleanly.
+
+### D29 — The app bundles the standing data
+*2026-10-26 · Accepted · Settles the open point in D24*
+
+`cargo xtask data` also writes gzipped tables (about 4 MB), the manifest and
+the NOTICE to `app/assets/data/` (git-ignored), which the app declares as
+assets. At start the app hands the bytes to Rust, which decompresses and
+indexes them. Without them (a build without `cargo xtask data`) the app
+still works and looks routes up online only. For now the data is as fresh
+as the app release; downloadable updates are reconsidered before release
+(M7).
+
+**Why:** offline, no per-user downloads from anyone's server, and 4 MB is a
+small price for route lookups that never leave the device.
+
+### D30 — `Sky` in the core; the bridge hands the app ready-to-show text
+*2026-10-26 · Accepted*
+
+`passingover_core::Sky` does a whole poll (fetch, keep the flying aircraft
+nearby, resolve routes, estimate landing) for every front end; the CLI and
+the app share it. The bridge (`SkyHandle`) returns plain values: flight
+title, destination, origin, local time, "about 7 h 40 min", the whole line,
+and the credits to show. The app only lays them out. Text is English for
+now; localisation comes later.
+
+**Why:** one implementation of the logic and the wording, tested in Rust;
+the Flutter side stays thin and easy to restyle.
+
+### D31 — Approximate location only, with a manual fallback
+*2026-10-26 · Accepted*
+
+The app asks for location at low accuracy through geolocator: iOS offers
+approximate location by default (`NSLocationDefaultAccuracyReduced`),
+Android declares only `ACCESS_COARSE_LOCATION`, and macOS gets the location
+entitlement. Users can type coordinates instead. The device location is
+refreshed every 10 minutes while the app is visible, and is rounded to
+~1 km before any request (D15, D21).
+
+**Why:** the app only needs to know roughly where you are, so it shouldn't
+ask for more.
+
+### D32 — Daily request budget, and app state kept on the device
+*2026-10-26 · Accepted · Details D15 and D17*
+
+The core counts position requests per source per UTC day. A device sends at
+most 450 a day to adsb.lol (90 % of the 500 its rate-limit header
+announces); after that the fallback serves until midnight UTC. The app
+saves the count, its randomly chosen primary source and its location
+settings with shared_preferences, on the device only.
+
+**Why:** restarts must not reset the budget, and nothing about the user
+needs a server.
