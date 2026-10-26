@@ -72,6 +72,24 @@ flutter:
   # looked up online only (D29).
   assets:
     - assets/data/
+    # The font's licence (SIL OFL 1.1) travels with it.
+    - assets/fonts/overpass/LICENSE.md
+
+  # Overpass 3.0.5 from github.com/RedHatOfficial/Overpass, bundled so the app
+  # reads the same on every platform (D42). Weight 500 falls back to 400 or 600.
+  fonts:
+    - family: Overpass
+      fonts:
+        - asset: assets/fonts/overpass/overpass-extralight.ttf
+          weight: 200
+        - asset: assets/fonts/overpass/overpass-light.ttf
+          weight: 300
+        - asset: assets/fonts/overpass/overpass-regular.ttf
+          weight: 400
+        - asset: assets/fonts/overpass/overpass-semibold.ttf
+          weight: 600
+        - asset: assets/fonts/overpass/overpass-bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

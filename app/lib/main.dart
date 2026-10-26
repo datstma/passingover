@@ -91,6 +91,7 @@ class _PassingOverAppState extends State<PassingOverApp> {
       title: 'Passing Over',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: 'Overpass',
         colorScheme: .fromSeed(
           seedColor: const Color(0xFF1B2A4A),
           brightness: Brightness.dark,
