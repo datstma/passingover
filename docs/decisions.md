@@ -507,3 +507,22 @@ don't fit scroll one whole column at a time, like a real board.
 
 **Why:** an own font keeps the look exact on every platform with no font
 licence to track; folding keeps every city readable.
+
+### D38 — The daydream log stays on the device
+*2026-10-26 · Accepted*
+
+The core's `DaydreamLog` records each flight with a known destination once
+per passage (the same aircraft and flight within two hours is one passage)
+in an append-only TSV file in the app's private folder. It stores only
+flight facts: when, which flight, from and to where (with the destination's
+country and position). It never stores the user's location; "the farthest"
+is measured from the current location at the moment the summary is shown.
+The log is on by default, can be turned off and cleared, and a torn last
+line (power cut) is skipped. Summaries: "This month, 1,284 planes passed
+over on their way to 61 cities in 24 countries." "The farthest was going to
+Singapore, about 10,000 km away." "Most often: London (34) and Paris (21)."
+The app uses calendar periods (this week from Monday, this month, so far);
+the CLI uses rolling ones (`now --log FILE`, `log --log FILE`).
+
+**Why:** the "daydream log" from the brief without making the app a
+location diary: what passed over, not where you were.

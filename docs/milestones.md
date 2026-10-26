@@ -9,7 +9,7 @@ Status values: **Not started** · **In progress** · **Done**.
 | M2 | First app view | Done |
 | M3 | Daydream enrichment | Done |
 | M4 | Ambient mode | Done |
-| M5 | Daydream log | Not started |
+| M5 | Daydream log | Done |
 | M6 | Native extras | Not started |
 | M7 | Release | Not started |
 
@@ -125,6 +125,12 @@ LED-matrix themes and an auto-brightness schedule.
 
 Local history and gentle statistics ("this month, planes over your home went
 to 61 cities").
+
+- [x] Each passage logged once, flight facts only, on the device (D38)
+- [x] Summaries: flights, cities, countries, the farthest, most often
+- [x] App: "Daydream log" screen (this week, this month, so far), on/off,
+      clear; verified live in the sandboxed macOS app
+- [x] CLI: `now --log FILE`, `log --log FILE [--period] [--lat --lon]`
 
 ## M6 — Native extras
 

@@ -54,6 +54,19 @@ AF 10 → New York, landing nearby in about 5 min.
 Aircraft data: adsb.lol (ODbL), https://adsb.lol. Routes: VRS standing data. Weather data by Open-Meteo.com, https://open-meteo.com/.
 ```
 
+Keep a daydream log and ask it what it remembers:
+
+```sh
+cargo run -p passingover-cli -- now --lat 40.64 --lon -73.78 --log ~/daydream.tsv
+cargo run -p passingover-cli -- log --log ~/daydream.tsv --period all
+```
+
+```text
+So far, 23 planes passed over on their way to 10 cities in 2 countries.
+The farthest was going to San Francisco, about 4,200 km away.
+Most often: New York (12) and Newark (3).
+```
+
 Your location is rounded to about 1 km before it's sent to the aircraft
 data source. Route lookups that aren't in the local tables send only the
 flight's callsign, and weather lookups only the destination airport's
