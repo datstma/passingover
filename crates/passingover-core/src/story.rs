@@ -5,12 +5,22 @@ use std::time::{Duration, SystemTime};
 
 use crate::flight::{Flight, local_time};
 
-/// One short line about a flight, as the CLI prints it.
-pub fn dreamy_line(flight: &Flight, now: SystemTime) -> String {
-    let name = flight
+/// A flight's name for display: `SK 945`, its callsign, or a description.
+pub fn title(flight: &Flight) -> &str {
+    flight
         .flight_number
         .as_deref()
-        .unwrap_or("A plane with no callsign");
+        .unwrap_or("A plane with no callsign")
+}
+
+/// `about 7 h 40 min`, for an estimated time to landing (D12).
+pub fn landing_phrase(left: Duration) -> String {
+    format!("about {}", human_duration(left))
+}
+
+/// One short line about a flight, as the CLI prints it.
+pub fn dreamy_line(flight: &Flight, now: SystemTime) -> String {
+    let name = title(flight);
     let Some(leg) = &flight.leg else {
         return format!("{name}, destination unknown.");
     };
@@ -24,7 +34,7 @@ pub fn dreamy_line(flight: &Flight, now: SystemTime) -> String {
         line.push_str(&format!(" It's {time} there."));
     }
     if let Some(left) = flight.time_to_landing {
-        line.push_str(&format!(" Landing in about {}.", human_duration(left)));
+        line.push_str(&format!(" Landing in {}.", landing_phrase(left)));
     }
     line
 }

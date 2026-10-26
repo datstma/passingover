@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/hello.dart';
+import 'api/sky.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -69,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -46657706;
+  int get rustContentHash => 1100230098;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -81,9 +82,58 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<DataInfo> crateApiSkySkyHandleLoadData({
+    required SkyHandle that,
+    required List<int> routesGz,
+    required List<int> airportsGz,
+    required List<int> airlinesGz,
+  });
+
+  SkyHandle crateApiSkySkyHandleNew({
+    required Source primary,
+    required int seed,
+  });
+
+  Future<PollResult> crateApiSkySkyHandlePoll({
+    required SkyHandle that,
+    required double lat,
+    required double lon,
+    required double radiusKm,
+  });
+
+  Source crateApiSkySkyHandlePrimary({required SkyHandle that});
+
+  void crateApiSkySkyHandleSetUsage({
+    required SkyHandle that,
+    required Usage usage,
+  });
+
+  Usage crateApiSkySkyHandleUsage({required SkyHandle that});
+
+  Future<NowView> crateApiSkySkyHandleViewFromSnapshot({
+    required SkyHandle that,
+    required Source source,
+    required List<int> body,
+    required double lat,
+    required double lon,
+    required double radiusKm,
+  });
+
+  Source crateApiSkyChoosePrimarySource({required double roll});
+
+  List<Credit> crateApiSkyDataCredits();
+
   String crateApiHelloHello();
 
   Future<void> crateApiHelloInitApp();
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_SkyHandle;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_SkyHandle;
+
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_SkyHandlePtr;
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -95,12 +145,304 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<DataInfo> crateApiSkySkyHandleLoadData({
+    required SkyHandle that,
+    required List<int> routesGz,
+    required List<int> airportsGz,
+    required List<int> airlinesGz,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          sse_encode_list_prim_u_8_loose(routesGz, serializer);
+          sse_encode_list_prim_u_8_loose(airportsGz, serializer);
+          sse_encode_list_prim_u_8_loose(airlinesGz, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_data_info,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSkySkyHandleLoadDataConstMeta,
+        argValues: [that, routesGz, airportsGz, airlinesGz],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleLoadDataConstMeta =>
+      const TaskConstMeta(
+        debugName: "SkyHandle_load_data",
+        argNames: ["that", "routesGz", "airportsGz", "airlinesGz"],
+      );
+
+  @override
+  SkyHandle crateApiSkySkyHandleNew({
+    required Source primary,
+    required int seed,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_source(primary, serializer);
+          sse_encode_u_32(seed, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkySkyHandleNewConstMeta,
+        argValues: [primary, seed],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleNewConstMeta => const TaskConstMeta(
+    debugName: "SkyHandle_new",
+    argNames: ["primary", "seed"],
+  );
+
+  @override
+  Future<PollResult> crateApiSkySkyHandlePoll({
+    required SkyHandle that,
+    required double lat,
+    required double lon,
+    required double radiusKm,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          sse_encode_f_64(lat, serializer);
+          sse_encode_f_64(lon, serializer);
+          sse_encode_f_64(radiusKm, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_poll_result,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkySkyHandlePollConstMeta,
+        argValues: [that, lat, lon, radiusKm],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandlePollConstMeta => const TaskConstMeta(
+    debugName: "SkyHandle_poll",
+    argNames: ["that", "lat", "lon", "radiusKm"],
+  );
+
+  @override
+  Source crateApiSkySkyHandlePrimary({required SkyHandle that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_source,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkySkyHandlePrimaryConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandlePrimaryConstMeta =>
+      const TaskConstMeta(debugName: "SkyHandle_primary", argNames: ["that"]);
+
+  @override
+  void crateApiSkySkyHandleSetUsage({
+    required SkyHandle that,
+    required Usage usage,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          sse_encode_box_autoadd_usage(usage, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkySkyHandleSetUsageConstMeta,
+        argValues: [that, usage],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleSetUsageConstMeta =>
+      const TaskConstMeta(
+        debugName: "SkyHandle_set_usage",
+        argNames: ["that", "usage"],
+      );
+
+  @override
+  Usage crateApiSkySkyHandleUsage({required SkyHandle that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_usage,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkySkyHandleUsageConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleUsageConstMeta =>
+      const TaskConstMeta(debugName: "SkyHandle_usage", argNames: ["that"]);
+
+  @override
+  Future<NowView> crateApiSkySkyHandleViewFromSnapshot({
+    required SkyHandle that,
+    required Source source,
+    required List<int> body,
+    required double lat,
+    required double lon,
+    required double radiusKm,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          sse_encode_source(source, serializer);
+          sse_encode_list_prim_u_8_loose(body, serializer);
+          sse_encode_f_64(lat, serializer);
+          sse_encode_f_64(lon, serializer);
+          sse_encode_f_64(radiusKm, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_now_view,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSkySkyHandleViewFromSnapshotConstMeta,
+        argValues: [that, source, body, lat, lon, radiusKm],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleViewFromSnapshotConstMeta =>
+      const TaskConstMeta(
+        debugName: "SkyHandle_view_from_snapshot",
+        argNames: ["that", "source", "body", "lat", "lon", "radiusKm"],
+      );
+
+  @override
+  Source crateApiSkyChoosePrimarySource({required double roll}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(roll, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_source,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkyChoosePrimarySourceConstMeta,
+        argValues: [roll],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkyChoosePrimarySourceConstMeta =>
+      const TaskConstMeta(
+        debugName: "choose_primary_source",
+        argNames: ["roll"],
+      );
+
+  @override
+  List<Credit> crateApiSkyDataCredits() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_credit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkyDataCreditsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkyDataCreditsConstMeta =>
+      const TaskConstMeta(debugName: "data_credits", argNames: []);
+
+  @override
   String crateApiHelloHello() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -125,7 +467,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 11,
             port: port_,
           );
         },
@@ -143,6 +485,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHelloInitAppConstMeta =>
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_SkyHandle => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_SkyHandle => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle;
+
+  @protected
+  SkyHandle
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  SkyHandle
+  dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  SkyHandle
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  SkyHandle
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
   @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -150,9 +536,175 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double dco_decode_box_autoadd_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
+  NowView dco_decode_box_autoadd_now_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_now_view(raw);
+  }
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  Usage dco_decode_box_autoadd_usage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_usage(raw);
+  }
+
+  @protected
+  Credit dco_decode_credit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Credit(
+      text: dco_decode_String(arr[0]),
+      url: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
+  DataInfo dco_decode_data_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return DataInfo(
+      routes: dco_decode_u_32(arr[0]),
+      airports: dco_decode_u_32(arr[1]),
+    );
+  }
+
+  @protected
+  double dco_decode_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
+  FlightView dco_decode_flight_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    return FlightView(
+      key: dco_decode_String(arr[0]),
+      title: dco_decode_String(arr[1]),
+      destination: dco_decode_opt_String(arr[2]),
+      origin: dco_decode_opt_String(arr[3]),
+      localTime: dco_decode_opt_String(arr[4]),
+      landingIn: dco_decode_opt_String(arr[5]),
+      line: dco_decode_String(arr[6]),
+      distanceKm: dco_decode_f_64(arr[7]),
+      altitudeM: dco_decode_opt_box_autoadd_f_64(arr[8]),
+    );
+  }
+
+  @protected
+  int dco_decode_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  PlatformInt64 dco_decode_i_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeI64(raw);
+  }
+
+  @protected
+  List<Credit> dco_decode_list_credit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_credit).toList();
+  }
+
+  @protected
+  List<FlightView> dco_decode_list_flight_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_flight_view).toList();
+  }
+
+  @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as List<int>;
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  NowView dco_decode_now_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return NowView(
+      flights: dco_decode_list_flight_view(arr[0]),
+      credits: dco_decode_list_credit(arr[1]),
+      source: dco_decode_source(arr[2]),
+      updatedUnixMs: dco_decode_i_64(arr[3]),
+    );
+  }
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  double? dco_decode_opt_box_autoadd_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_f_64(raw);
+  }
+
+  @protected
+  NowView? dco_decode_opt_box_autoadd_now_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_now_view(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
+  }
+
+  @protected
+  PollResult dco_decode_poll_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return PollResult(
+      view: dco_decode_opt_box_autoadd_now_view(arr[0]),
+      error: dco_decode_opt_String(arr[1]),
+      retryAfterSecs: dco_decode_opt_box_autoadd_u_32(arr[2]),
+    );
+  }
+
+  @protected
+  Source dco_decode_source(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return Source.values[raw as int];
+  }
+
+  @protected
+  int dco_decode_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -168,6 +720,73 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Usage dco_decode_usage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Usage(
+      day: dco_decode_u_32(arr[0]),
+      adsbLol: dco_decode_u_32(arr[1]),
+      adsbFi: dco_decode_u_32(arr[2]),
+    );
+  }
+
+  @protected
+  BigInt dco_decode_usize(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeU64(raw);
+  }
+
+  @protected
+  SkyHandle
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  SkyHandle
+  sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  SkyHandle
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  SkyHandle
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return SkyHandleImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -175,10 +794,209 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double sse_decode_box_autoadd_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_f_64(deserializer));
+  }
+
+  @protected
+  NowView sse_decode_box_autoadd_now_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_now_view(deserializer));
+  }
+
+  @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_32(deserializer));
+  }
+
+  @protected
+  Usage sse_decode_box_autoadd_usage(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_usage(deserializer));
+  }
+
+  @protected
+  Credit sse_decode_credit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_text = sse_decode_String(deserializer);
+    var var_url = sse_decode_String(deserializer);
+    return Credit(text: var_text, url: var_url);
+  }
+
+  @protected
+  DataInfo sse_decode_data_info(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_routes = sse_decode_u_32(deserializer);
+    var var_airports = sse_decode_u_32(deserializer);
+    return DataInfo(routes: var_routes, airports: var_airports);
+  }
+
+  @protected
+  double sse_decode_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat64();
+  }
+
+  @protected
+  FlightView sse_decode_flight_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_key = sse_decode_String(deserializer);
+    var var_title = sse_decode_String(deserializer);
+    var var_destination = sse_decode_opt_String(deserializer);
+    var var_origin = sse_decode_opt_String(deserializer);
+    var var_localTime = sse_decode_opt_String(deserializer);
+    var var_landingIn = sse_decode_opt_String(deserializer);
+    var var_line = sse_decode_String(deserializer);
+    var var_distanceKm = sse_decode_f_64(deserializer);
+    var var_altitudeM = sse_decode_opt_box_autoadd_f_64(deserializer);
+    return FlightView(
+      key: var_key,
+      title: var_title,
+      destination: var_destination,
+      origin: var_origin,
+      localTime: var_localTime,
+      landingIn: var_landingIn,
+      line: var_line,
+      distanceKm: var_distanceKm,
+      altitudeM: var_altitudeM,
+    );
+  }
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  PlatformInt64 sse_decode_i_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getPlatformInt64();
+  }
+
+  @protected
+  List<Credit> sse_decode_list_credit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Credit>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_credit(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<FlightView> sse_decode_list_flight_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <FlightView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_flight_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  NowView sse_decode_now_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_flights = sse_decode_list_flight_view(deserializer);
+    var var_credits = sse_decode_list_credit(deserializer);
+    var var_source = sse_decode_source(deserializer);
+    var var_updatedUnixMs = sse_decode_i_64(deserializer);
+    return NowView(
+      flights: var_flights,
+      credits: var_credits,
+      source: var_source,
+      updatedUnixMs: var_updatedUnixMs,
+    );
+  }
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_f_64(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  NowView? sse_decode_opt_box_autoadd_now_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_now_view(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_32(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  PollResult sse_decode_poll_result(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_view = sse_decode_opt_box_autoadd_now_view(deserializer);
+    var var_error = sse_decode_opt_String(deserializer);
+    var var_retryAfterSecs = sse_decode_opt_box_autoadd_u_32(deserializer);
+    return PollResult(
+      view: var_view,
+      error: var_error,
+      retryAfterSecs: var_retryAfterSecs,
+    );
+  }
+
+  @protected
+  Source sse_decode_source(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return Source.values[inner];
+  }
+
+  @protected
+  int sse_decode_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint32();
   }
 
   @protected
@@ -193,9 +1011,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  int sse_decode_i_32(SseDeserializer deserializer) {
+  Usage sse_decode_usage(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getInt32();
+    var var_day = sse_decode_u_32(deserializer);
+    var var_adsbLol = sse_decode_u_32(deserializer);
+    var var_adsbFi = sse_decode_u_32(deserializer);
+    return Usage(day: var_day, adsbLol: var_adsbLol, adsbFi: var_adsbFi);
+  }
+
+  @protected
+  BigInt sse_decode_usize(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getBigUint64();
   }
 
   @protected
@@ -205,9 +1032,164 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SkyHandle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as SkyHandleImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SkyHandle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as SkyHandleImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SkyHandle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as SkyHandleImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+    SkyHandle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as SkyHandleImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_now_view(NowView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_now_view(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_usage(Usage self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usage(self, serializer);
+  }
+
+  @protected
+  void sse_encode_credit(Credit self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.text, serializer);
+    sse_encode_String(self.url, serializer);
+  }
+
+  @protected
+  void sse_encode_data_info(DataInfo self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.routes, serializer);
+    sse_encode_u_32(self.airports, serializer);
+  }
+
+  @protected
+  void sse_encode_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat64(self);
+  }
+
+  @protected
+  void sse_encode_flight_view(FlightView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.key, serializer);
+    sse_encode_String(self.title, serializer);
+    sse_encode_opt_String(self.destination, serializer);
+    sse_encode_opt_String(self.origin, serializer);
+    sse_encode_opt_String(self.localTime, serializer);
+    sse_encode_opt_String(self.landingIn, serializer);
+    sse_encode_String(self.line, serializer);
+    sse_encode_f_64(self.distanceKm, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.altitudeM, serializer);
+  }
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putPlatformInt64(self);
+  }
+
+  @protected
+  void sse_encode_list_credit(List<Credit> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_credit(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_flight_view(
+    List<FlightView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_flight_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_prim_u_8_loose(
+    List<int> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint8List(
+      self is Uint8List ? self : Uint8List.fromList(self),
+    );
   }
 
   @protected
@@ -218,6 +1200,78 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_now_view(NowView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_flight_view(self.flights, serializer);
+    sse_encode_list_credit(self.credits, serializer);
+    sse_encode_source(self.source, serializer);
+    sse_encode_i_64(self.updatedUnixMs, serializer);
+  }
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_f_64(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_now_view(
+    NowView? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_now_view(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_32(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_poll_result(PollResult self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_box_autoadd_now_view(self.view, serializer);
+    sse_encode_opt_String(self.error, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.retryAfterSecs, serializer);
+  }
+
+  @protected
+  void sse_encode_source(Source self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint32(self);
   }
 
   @protected
@@ -232,9 +1286,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_i_32(int self, SseSerializer serializer) {
+  void sse_encode_usage(Usage self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putInt32(self);
+    sse_encode_u_32(self.day, serializer);
+    sse_encode_u_32(self.adsbLol, serializer);
+    sse_encode_u_32(self.adsbFi, serializer);
+  }
+
+  @protected
+  void sse_encode_usize(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putBigUint64(self);
   }
 
   @protected
@@ -242,4 +1304,74 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self ? 1 : 0);
   }
+}
+
+@sealed
+class SkyHandleImpl extends RustOpaque implements SkyHandle {
+  // Not to be used by end users
+  SkyHandleImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  SkyHandleImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_SkyHandle,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_SkyHandle,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_SkyHandlePtr,
+  );
+
+  /// Load the bundled standing data (gzipped tables, D29).
+  Future<DataInfo> loadData({
+    required List<int> routesGz,
+    required List<int> airportsGz,
+    required List<int> airlinesGz,
+  }) => RustLib.instance.api.crateApiSkySkyHandleLoadData(
+    that: this,
+    routesGz: routesGz,
+    airportsGz: airportsGz,
+    airlinesGz: airlinesGz,
+  );
+
+  /// Fetch what is overhead. `lat`/`lon` stay on the device; only a
+  /// rounded point (~1 km) is sent.
+  Future<PollResult> poll({
+    required double lat,
+    required double lon,
+    required double radiusKm,
+  }) => RustLib.instance.api.crateApiSkySkyHandlePoll(
+    that: this,
+    lat: lat,
+    lon: lon,
+    radiusKm: radiusKm,
+  );
+
+  Source primary() =>
+      RustLib.instance.api.crateApiSkySkyHandlePrimary(that: this);
+
+  void setUsage({required Usage usage}) => RustLib.instance.api
+      .crateApiSkySkyHandleSetUsage(that: this, usage: usage);
+
+  Usage usage() => RustLib.instance.api.crateApiSkySkyHandleUsage(that: this);
+
+  /// The view for a recorded source response, without any network: for
+  /// tests and offline demos.
+  Future<NowView> viewFromSnapshot({
+    required Source source,
+    required List<int> body,
+    required double lat,
+    required double lon,
+    required double radiusKm,
+  }) => RustLib.instance.api.crateApiSkySkyHandleViewFromSnapshot(
+    that: this,
+    source: source,
+    body: body,
+    lat: lat,
+    lon: lon,
+    radiusKm: radiusKm,
+  );
 }

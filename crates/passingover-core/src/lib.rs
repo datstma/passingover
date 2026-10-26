@@ -6,6 +6,7 @@
 
 pub mod aircraft;
 pub mod airport;
+pub mod credits;
 pub mod data;
 pub mod flight;
 pub mod geo;
