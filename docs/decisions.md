@@ -577,3 +577,59 @@ F-Droid (geolocator's docs show how to exclude `com.google.android.gms`).
 
 **Why:** the privacy promise is "roughly where you are, nothing more",
 including towards Google.
+
+### D42 — Brand: the dusk contrail, Overpass, night and dusk colours
+*2026-10-26 · Accepted*
+
+- **Icon:** a jet seen from the ground at dusk. It has a slim lit fuselage,
+  a red and a green wingtip light, and twin contrails, on a sky fading from
+  navy into peach.
+- **What it beat:**
+  - a light among stars, which read as a stargazing app;
+  - a rooftop scene;
+  - an amber LED arrow, a look Skyty Wall already uses for its ambient
+    "flight board".
+- **Why the view from the ground:** flight-tracker icons are mostly a plane
+  silhouette seen from above, radar sweeps or dotted trails on blue. None
+  shows a plane as you'd see it from below.
+- **Typeface:** Overpass 3.0.5 (SIL OFL 1.1, Red Hat), descended from the US
+  highway-sign alphabet. It is bundled in the app at weights 200–700, so the
+  app reads the same on all five platforms.
+- **Colours:**
+  - The app stays in the night sky: Night #0B1426 to Twilight #1C2B4A.
+  - The icon, website and store art use dusk: Zenith #16244A, Lavender
+    #5A5C8C, Rose #E39A7A and Peach #F6C48C.
+  - The wingtip lights are port red #FF4D4D and starboard green #3DDC84.
+- **Menu bar:** the macOS menu-bar item (D39) shows a one-colour template of
+  the icon instead of the system airplane symbol.
+- **Name check:**
+  - No app, Flathub entry or US trademark is called "Passing Over".
+  - App Store search treats "passingover" as "Passover", so store listings use
+    the two-word name and a descriptive subtitle.
+  - EU and Swedish trademarks are not checked yet.
+
+**Why:** the app is about looking up and wondering where a plane is going. The
+icon should be what you'd see from your garden at the end of the day, not an
+instrument.
+
+### D43 — App icons are rendered from SVG masters by `cargo xtask icons`
+*2026-10-26 · Accepted*
+
+The masters live in `design/icon/`: background, foreground, monochrome and
+menu bar. They are drawn on 1024 units, and everything that must stay visible
+fits Android's adaptive-icon safe zone. `cargo xtask icons` renders them with
+resvg (pure Rust, Apache-2.0 OR MIT) into:
+
+- **iOS:** opaque RGB PNGs, one per entry in `Contents.json`.
+- **macOS:** a rounded square on Apple's 824-unit grid, with a shadow.
+- **Android:** the adaptive background, foreground and monochrome layers for
+  each density, plus a rounded square for launchers before Android 8.
+- **Windows:** an `.ico` from 16 to 256 px.
+- **macOS menu bar:** the template image.
+
+The output is committed; rerun the task after changing a master. Like D24,
+this uses a pinned Rust task instead of a system tool, so every machine
+produces the same files.
+
+Still to do: Apple's layered Icon Composer format (Liquid Glass), and the
+Linux icon when packaging (M7).

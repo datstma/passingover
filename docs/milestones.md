@@ -144,4 +144,13 @@ or Kotlin where required).
 
 ## M7 — Release
 
-Packaging, store listings, website.
+Packaging, store listings, website. GitHub Releases come first, then the
+stores, F-Droid and Flathub. The website is GitHub Pages.
+
+- [x] Brand: app icon, colours and typeface (D42); icons rendered by
+      `cargo xtask icons` (D43)
+- [ ] Signed, notarized macOS build (Developer ID) and signed Windows build
+      (Artifact Signing, Public Trust)
+- [ ] GitHub Releases: macOS, Windows, Linux and an Android APK
+- [ ] Website on GitHub Pages
+- [ ] Store listings: App Store, Google Play, F-Droid, Flathub
