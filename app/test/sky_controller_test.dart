@@ -123,6 +123,23 @@ void main() {
     });
   });
 
+  test('ambient mode polls every minute, then back to every 15 s', () {
+    fakeAsync((async) {
+      final c = controller(async)..start();
+      async.flushMicrotasks();
+      c.setAmbient(true);
+      async.elapse(const Duration(seconds: 50));
+      expect(api.polls, hasLength(1));
+      async.elapse(const Duration(seconds: 13));
+      expect(api.polls, hasLength(2));
+      c.setAmbient(false);
+      async.flushMicrotasks();
+      async.elapse(const Duration(seconds: 17));
+      expect(api.polls.length, greaterThanOrEqualTo(3));
+      c.dispose();
+    });
+  });
+
   test('without a location it waits for the user', () {
     fakeAsync((async) {
       location.result = const LocationResult.problem('No permission');

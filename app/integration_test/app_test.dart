@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:passingover/main.dart';
+import 'package:passingover/src/ambient/ambient_platform.dart';
+import 'package:passingover/src/ambient/ambient_screen.dart';
 import 'package:passingover/src/location.dart';
 import 'package:passingover/src/rust/api/hello.dart';
 import 'package:passingover/src/rust/api/sky.dart';
@@ -12,6 +15,7 @@ import 'package:passingover/src/settings.dart';
 import 'package:passingover/src/sky_api.dart';
 import 'package:passingover/src/sky_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:window_manager/window_manager.dart';
 
 /// The last test talks to the real aircraft sources, so it only runs with
 /// `--dart-define=PASSINGOVER_LIVE=true`, e.g.
@@ -119,6 +123,34 @@ void main() {
     }
     debugPrint('LIVE credits: ${controller.view!.credits.map((c) => c.text)}');
     debugPrint('LIVE bundled data: ${controller.hasBundledData}');
+
+    // Ambient mode really fills the screen on desktops (D36).
+    if (DeviceAmbientPlatform.isDesktop) {
+      await windowManager.ensureInitialized();
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      unawaited(
+        navigator.push(
+          MaterialPageRoute<void>(
+            builder: (_) => AmbientScreen(controller: controller),
+          ),
+        ),
+      );
+      await tester.pump();
+      // The screen's platform calls need real time, not test frames.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(seconds: 3)),
+      );
+      final full = await tester.runAsync(windowManager.isFullScreen);
+      debugPrint('LIVE ambient fullscreen: $full');
+      expect(full, isTrue);
+      navigator.pop();
+      await tester.pump();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(seconds: 3)),
+      );
+      final back = await tester.runAsync(windowManager.isFullScreen);
+      expect(back, isFalse);
+    }
 
     controller.dispose();
   }, skip: !live);

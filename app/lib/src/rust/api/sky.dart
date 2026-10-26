@@ -239,22 +239,28 @@ class PollResult {
           retryAfterSecs == other.retryAfterSecs;
 }
 
-/// How often to poll (D15): every `interval_ms` plus or minus `jitter_ms`,
-/// never more often than `min_interval_ms`.
+/// How often to poll (D15): every `interval_ms` plus or minus `jitter_ms`
+/// (`ambient_interval_ms` in ambient mode), never more often than
+/// `min_interval_ms`.
 class PollTiming {
   final int intervalMs;
+  final int ambientIntervalMs;
   final int jitterMs;
   final int minIntervalMs;
 
   const PollTiming({
     required this.intervalMs,
+    required this.ambientIntervalMs,
     required this.jitterMs,
     required this.minIntervalMs,
   });
 
   @override
   int get hashCode =>
-      intervalMs.hashCode ^ jitterMs.hashCode ^ minIntervalMs.hashCode;
+      intervalMs.hashCode ^
+      ambientIntervalMs.hashCode ^
+      jitterMs.hashCode ^
+      minIntervalMs.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -262,6 +268,7 @@ class PollTiming {
       other is PollTiming &&
           runtimeType == other.runtimeType &&
           intervalMs == other.intervalMs &&
+          ambientIntervalMs == other.ambientIntervalMs &&
           jitterMs == other.jitterMs &&
           minIntervalMs == other.minIntervalMs;
 }

@@ -789,12 +789,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PollTiming dco_decode_poll_timing(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return PollTiming(
       intervalMs: dco_decode_u_32(arr[0]),
-      jitterMs: dco_decode_u_32(arr[1]),
-      minIntervalMs: dco_decode_u_32(arr[2]),
+      ambientIntervalMs: dco_decode_u_32(arr[1]),
+      jitterMs: dco_decode_u_32(arr[2]),
+      minIntervalMs: dco_decode_u_32(arr[3]),
     );
   }
 
@@ -1105,10 +1106,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PollTiming sse_decode_poll_timing(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_intervalMs = sse_decode_u_32(deserializer);
+    var var_ambientIntervalMs = sse_decode_u_32(deserializer);
     var var_jitterMs = sse_decode_u_32(deserializer);
     var var_minIntervalMs = sse_decode_u_32(deserializer);
     return PollTiming(
       intervalMs: var_intervalMs,
+      ambientIntervalMs: var_ambientIntervalMs,
       jitterMs: var_jitterMs,
       minIntervalMs: var_minIntervalMs,
     );
@@ -1397,6 +1400,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_poll_timing(PollTiming self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.intervalMs, serializer);
+    sse_encode_u_32(self.ambientIntervalMs, serializer);
     sse_encode_u_32(self.jitterMs, serializer);
     sse_encode_u_32(self.minIntervalMs, serializer);
   }

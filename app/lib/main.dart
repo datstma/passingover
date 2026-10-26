@@ -3,7 +3,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:window_manager/window_manager.dart';
 
+import 'src/ambient/ambient_platform.dart';
 import 'src/location.dart';
 import 'src/now_screen.dart';
 import 'src/rust/api/sky.dart';
@@ -15,6 +17,10 @@ import 'src/sky_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await RustLib.init();
+  if (DeviceAmbientPlatform.isDesktop) {
+    // Lets ambient mode fill the screen on desktops (D36).
+    await windowManager.ensureInitialized();
+  }
   final settings = Settings(await SharedPreferences.getInstance());
   final random = Random();
 

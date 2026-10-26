@@ -839,10 +839,12 @@ impl SseDecode for crate::api::sky::PollTiming {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_intervalMs = <u32>::sse_decode(deserializer);
+        let mut var_ambientIntervalMs = <u32>::sse_decode(deserializer);
         let mut var_jitterMs = <u32>::sse_decode(deserializer);
         let mut var_minIntervalMs = <u32>::sse_decode(deserializer);
         return crate::api::sky::PollTiming {
             interval_ms: var_intervalMs,
+            ambient_interval_ms: var_ambientIntervalMs,
             jitter_ms: var_jitterMs,
             min_interval_ms: var_minIntervalMs,
         };
@@ -1063,6 +1065,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::sky::PollTiming {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.interval_ms.into_into_dart().into_dart(),
+            self.ambient_interval_ms.into_into_dart().into_dart(),
             self.jitter_ms.into_into_dart().into_dart(),
             self.min_interval_ms.into_into_dart().into_dart(),
         ]
@@ -1291,6 +1294,7 @@ impl SseEncode for crate::api::sky::PollTiming {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.interval_ms, serializer);
+        <u32>::sse_encode(self.ambient_interval_ms, serializer);
         <u32>::sse_encode(self.jitter_ms, serializer);
         <u32>::sse_encode(self.min_interval_ms, serializer);
     }

@@ -79,8 +79,12 @@ class FakeSkyApi implements SkyApi {
   Usage get usage => _usage;
 
   @override
-  PollTiming get timing =>
-      const PollTiming(intervalMs: 15000, jitterMs: 2000, minIntervalMs: 10000);
+  PollTiming get timing => const PollTiming(
+    intervalMs: 15000,
+    ambientIntervalMs: 60000,
+    jitterMs: 2000,
+    minIntervalMs: 10000,
+  );
 }
 
 class FakeLocation implements LocationProvider {

@@ -1,6 +1,11 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'ambient/dimming.dart';
 import 'rust/api/sky.dart';
+
+export 'ambient/dimming.dart' show DimSchedule;
+
+enum AmbientTheme { nightSky, ledMatrix }
 
 /// Where the user's location comes from.
 enum LocationMode { device, manual }
@@ -81,4 +86,25 @@ class Settings {
 
   Future<void> setImperial(bool imperial) =>
       _prefs.setBool('units.imperial', imperial);
+
+  AmbientTheme get ambientTheme =>
+      _prefs.getString('ambient.theme') == AmbientTheme.ledMatrix.name
+      ? AmbientTheme.ledMatrix
+      : AmbientTheme.nightSky;
+
+  Future<void> setAmbientTheme(AmbientTheme theme) =>
+      _prefs.setString('ambient.theme', theme.name);
+
+  /// When ambient mode dims itself; 23:00–07:00 by default.
+  DimSchedule get dimSchedule => DimSchedule(
+    enabled: _prefs.getBool('dim.enabled') ?? true,
+    startMinutes: _prefs.getInt('dim.start') ?? 23 * 60,
+    endMinutes: _prefs.getInt('dim.end') ?? 7 * 60,
+  );
+
+  Future<void> setDimSchedule(DimSchedule schedule) async {
+    await _prefs.setBool('dim.enabled', schedule.enabled);
+    await _prefs.setInt('dim.start', schedule.startMinutes);
+    await _prefs.setInt('dim.end', schedule.endMinutes);
+  }
 }

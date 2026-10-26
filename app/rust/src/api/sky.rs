@@ -108,20 +108,25 @@ pub struct DataInfo {
     pub airports: u32,
 }
 
-/// How often to poll (D15): every `interval_ms` plus or minus `jitter_ms`,
-/// never more often than `min_interval_ms`.
+/// How often to poll (D15): every `interval_ms` plus or minus `jitter_ms`
+/// (`ambient_interval_ms` in ambient mode), never more often than
+/// `min_interval_ms`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PollTiming {
     pub interval_ms: u32,
+    pub ambient_interval_ms: u32,
     pub jitter_ms: u32,
     pub min_interval_ms: u32,
 }
 
 #[frb(sync)]
 pub fn poll_timing() -> PollTiming {
-    use passingover_core::polite::{MIN_POLL_INTERVAL, POLL_INTERVAL, POLL_JITTER};
+    use passingover_core::polite::{
+        AMBIENT_POLL_INTERVAL, MIN_POLL_INTERVAL, POLL_INTERVAL, POLL_JITTER,
+    };
     PollTiming {
         interval_ms: POLL_INTERVAL.as_millis() as u32,
+        ambient_interval_ms: AMBIENT_POLL_INTERVAL.as_millis() as u32,
         jitter_ms: POLL_JITTER.as_millis() as u32,
         min_interval_ms: MIN_POLL_INTERVAL.as_millis() as u32,
     }

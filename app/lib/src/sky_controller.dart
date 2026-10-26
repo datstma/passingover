@@ -55,11 +55,13 @@ class SkyController extends ChangeNotifier {
 
   Timer? _timer;
   bool _paused = false;
+  bool _ambient = false;
   bool _polling = false;
   bool _pollAgain = false;
   DateTime? _locatedAt;
   DateTime? _lastPollAt;
 
+  Settings get settings => _settings;
   LocationMode get locationMode => _settings.locationMode;
   LatLon? get manualLocation => _settings.manualLocation;
   bool get imperial => _settings.imperial;
@@ -95,6 +97,17 @@ class SkyController extends ChangeNotifier {
     await _settings.setLocationMode(LocationMode.manual);
     await _locate();
     _pollSoon();
+  }
+
+  /// Ambient mode polls less often (D15: every 60 s).
+  void setAmbient(bool ambient) {
+    if (_ambient == ambient) return;
+    _ambient = ambient;
+    if (!ambient) {
+      _pollSoon();
+    } else if (!_polling && !_paused && here != null) {
+      _schedule(null);
+    }
   }
 
   Future<void> setImperial(bool imperial) async {
@@ -190,9 +203,11 @@ class SkyController extends ChangeNotifier {
   void _schedule(int? retryAfterSecs) {
     if (_paused) return;
     final t = _api.timing;
-    var ms = t.intervalMs + _random.nextInt(2 * t.jitterMs + 1) - t.jitterMs;
+    final base = _ambient ? t.ambientIntervalMs : t.intervalMs;
+    var ms = base + _random.nextInt(2 * t.jitterMs + 1) - t.jitterMs;
     if (retryAfterSecs != null) ms = max(ms, retryAfterSecs * 1000);
     ms = max(ms, t.minIntervalMs);
+    _timer?.cancel();
     _timer = Timer(Duration(milliseconds: ms), () => unawaited(_tick()));
   }
 
