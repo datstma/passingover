@@ -35,7 +35,12 @@ void main() {
       final c = controller(async)..start();
       async.flushMicrotasks();
       expect(api.polls, hasLength(1));
-      expect(api.polls.single, (59.65, 17.92, Settings.defaultRadiusKm));
+      expect(api.polls.single, (
+        lat: 59.65,
+        lon: 17.92,
+        radiusKm: Settings.defaultRadiusKm,
+        imperial: false,
+      ));
       expect(c.view?.flights.single.title, 'SK 945');
       expect(settings.usage?.adsbLol, 1);
 
@@ -77,15 +82,31 @@ void main() {
     });
   });
 
-  test('typed-in coordinates replace the device location', () {
+  test('typed-in coordinates replace the device location, politely', () {
     fakeAsync((async) {
       final c = controller(async)..start();
       async.flushMicrotasks();
       c.useManualLocation(const LatLon(55.68, 12.57));
       async.flushMicrotasks();
-      expect(api.polls.last.$1, 55.68);
+      expect(api.polls, hasLength(1), reason: 'not within 10 s of a poll');
+      async.elapse(const Duration(seconds: 10));
+      expect(api.polls.last.lat, 55.68);
       expect(settings.locationMode, LocationMode.manual);
       expect(location.calls, 1, reason: 'the device is not asked again');
+      c.dispose();
+    });
+  });
+
+  test('switching to °F polls again with imperial units', () {
+    fakeAsync((async) {
+      final c = controller(async)..start();
+      async.flushMicrotasks();
+      async.elapse(const Duration(seconds: 11));
+      c.setImperial(true);
+      async.flushMicrotasks();
+      expect(api.polls, hasLength(2));
+      expect(api.polls.last.imperial, isTrue);
+      expect(settings.imperial, isTrue);
       c.dispose();
     });
   });

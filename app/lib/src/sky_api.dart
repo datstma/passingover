@@ -4,12 +4,17 @@ import 'rust/api/sky.dart';
 
 /// What the app needs from the Rust core. Tests use a fake.
 abstract class SkyApi {
-  /// Load the bundled standing data. Returns false if the app was built
-  /// without it (routes are then looked up online only, D29).
+  /// Load the bundled standing data and regions. Returns false if the app
+  /// was built without them (routes are then looked up online only, D29).
   Future<bool> loadBundledData();
 
   /// What is overhead. `lat`/`lon` never leave the device unrounded.
-  Future<PollResult> poll(double lat, double lon, double radiusKm);
+  Future<PollResult> poll(
+    double lat,
+    double lon,
+    double radiusKm, {
+    required bool imperial,
+  });
 
   Usage get usage;
 
@@ -21,28 +26,38 @@ class RustSkyApi implements SkyApi {
 
   final SkyHandle _handle;
 
-  @override
-  Future<bool> loadBundledData() async {
-    Future<Uint8List> asset(String name) async {
-      final data = await rootBundle.load('assets/data/$name');
-      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    }
-
-    try {
-      await _handle.loadData(
-        routesGz: await asset('routes.tsv.gz'),
-        airportsGz: await asset('airports.tsv.gz'),
-        airlinesGz: await asset('airlines.tsv.gz'),
-      );
-      return true;
-    } catch (_) {
-      return false;
-    }
+  static Future<Uint8List> _asset(String name) async {
+    final data = await rootBundle.load('assets/data/$name');
+    return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   }
 
   @override
-  Future<PollResult> poll(double lat, double lon, double radiusKm) =>
-      _handle.poll(lat: lat, lon: lon, radiusKm: radiusKm);
+  Future<bool> loadBundledData() async {
+    try {
+      await _handle.loadData(
+        routesGz: await _asset('routes.tsv.gz'),
+        airportsGz: await _asset('airports.tsv.gz'),
+        airlinesGz: await _asset('airlines.tsv.gz'),
+      );
+    } catch (_) {
+      return false;
+    }
+    try {
+      await _handle.loadRegions(regionsGz: await _asset('regions.tsv.gz'));
+    } catch (_) {
+      // Without regions the journey just doesn't say what lies ahead.
+    }
+    return true;
+  }
+
+  @override
+  Future<PollResult> poll(
+    double lat,
+    double lon,
+    double radiusKm, {
+    required bool imperial,
+  }) =>
+      _handle.poll(lat: lat, lon: lon, radiusKm: radiusKm, imperial: imperial);
 
   @override
   Usage get usage => _handle.usage();

@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `credit`, `failure`, `flight_view`, `place`, `view`
+// These functions are ignored because they are not marked as `pub`: `credit`, `failure`, `flight_view`, `place`, `units`, `view`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`
 
 PollTiming pollTiming() => RustLib.instance.api.crateApiSkyPollTiming();
@@ -28,6 +28,9 @@ abstract class SkyHandle implements RustOpaqueInterface {
     required List<int> airlinesGz,
   });
 
+  /// Load the bundled countries and seas (D33).
+  Future<void> loadRegions({required List<int> regionsGz});
+
   factory SkyHandle({required Source primary, required int seed}) => RustLib
       .instance
       .api
@@ -39,6 +42,7 @@ abstract class SkyHandle implements RustOpaqueInterface {
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   });
 
   Source primary();
@@ -55,6 +59,7 @@ abstract class SkyHandle implements RustOpaqueInterface {
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   });
 }
 
@@ -105,11 +110,21 @@ class FlightView {
   final String? destination;
   final String? origin;
 
-  /// Wall-clock time at the destination, `HH:MM`.
+  /// Wall-clock time at the destination, `HH:MM`; not set when it lands
+  /// nearby.
   final String? localTime;
+
+  /// `9°C and overcast`; not set when it lands nearby.
+  final String? weather;
 
   /// `about 7 h 40 min`.
   final String? landingIn;
+
+  /// The destination is near the user.
+  final bool landsNearby;
+
+  /// "Left Stockholm about 1 h 10 min ago and will cross …".
+  final String? journey;
 
   /// The whole story in one sentence.
   final String line;
@@ -122,7 +137,10 @@ class FlightView {
     this.destination,
     this.origin,
     this.localTime,
+    this.weather,
     this.landingIn,
+    required this.landsNearby,
+    this.journey,
     required this.line,
     required this.distanceKm,
     this.altitudeM,
@@ -135,7 +153,10 @@ class FlightView {
       destination.hashCode ^
       origin.hashCode ^
       localTime.hashCode ^
+      weather.hashCode ^
       landingIn.hashCode ^
+      landsNearby.hashCode ^
+      journey.hashCode ^
       line.hashCode ^
       distanceKm.hashCode ^
       altitudeM.hashCode;
@@ -150,7 +171,10 @@ class FlightView {
           destination == other.destination &&
           origin == other.origin &&
           localTime == other.localTime &&
+          weather == other.weather &&
           landingIn == other.landingIn &&
+          landsNearby == other.landsNearby &&
+          journey == other.journey &&
           line == other.line &&
           distanceKm == other.distanceKm &&
           altitudeM == other.altitudeM;

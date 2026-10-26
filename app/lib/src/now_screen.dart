@@ -67,7 +67,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Location',
+            tooltip: 'Location and units',
             color: _soft,
             icon: const Icon(Icons.place_outlined),
             onPressed: () => showLocationSheet(context, controller),
@@ -132,18 +132,25 @@ class _FlightTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final destination = flight.destination;
-    final details = [
+    final there = [
       if (flight.localTime != null) '${flight.localTime} there',
-      if (flight.landingIn != null) 'landing in ${flight.landingIn}',
-    ];
+      ?flight.weather,
+    ].join(', ');
+    final landing = flight.landingIn == null
+        ? null
+        : flight.landsNearby
+        ? 'Landing nearby in ${flight.landingIn}'
+        : 'Landing in ${flight.landingIn}';
+    final journey =
+        flight.journey ??
+        (flight.origin == null ? null : 'from ${flight.origin}');
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeOut,
       builder: (context, t, child) => Opacity(opacity: t, child: child),
       child: Semantics(
-        label: flight.line,
+        label: [flight.line, ?flight.journey].join(' '),
         excludeSemantics: true,
         child: Column(
           crossAxisAlignment: .start,
@@ -156,20 +163,18 @@ class _FlightTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            _Destination(name: destination, style: text.headlineMedium),
-            if (details.isNotEmpty) ...[
+            _Destination(name: flight.destination, style: text.headlineMedium),
+            if (there.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(
-                details.join(' · '),
-                style: text.bodyLarge?.copyWith(color: _soft),
-              ),
+              Text(there, style: text.bodyLarge?.copyWith(color: _soft)),
             ],
-            if (flight.origin != null) ...[
+            if (landing != null) ...[
               const SizedBox(height: 2),
-              Text(
-                'from ${flight.origin}',
-                style: text.bodyMedium?.copyWith(color: _fainter),
-              ),
+              Text(landing, style: text.bodyLarge?.copyWith(color: _soft)),
+            ],
+            if (journey != null) ...[
+              const SizedBox(height: 6),
+              Text(journey, style: text.bodyMedium?.copyWith(color: _fainter)),
             ],
           ],
         ),

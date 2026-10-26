@@ -32,16 +32,16 @@ void main() {
     final controller = await started(
       tester,
       answers: [
-        PollResult(view: viewOf([sk945, unknown])),
+        PollResult(view: viewOf([sk945, aa43, unknown])),
       ],
     );
     expect(find.text('SK 945'), findsOneWidget);
     expect(find.textContaining('Chicago', findRichText: true), findsOneWidget);
-    expect(
-      find.text('15:12 there · landing in about 7 h 40 min'),
-      findsOneWidget,
-    );
-    expect(find.text('from Stockholm'), findsOneWidget);
+    expect(find.text('15:12 there, 9°C and overcast'), findsOneWidget);
+    expect(find.text('Landing in about 7 h 40 min'), findsOneWidget);
+    expect(find.text(sk945.journey!), findsOneWidget);
+    expect(find.text('Landing nearby in about 5 min'), findsOneWidget);
+    expect(find.text('Left Paris about 7 h 40 min ago.'), findsOneWidget);
     expect(find.text('SAS1225'), findsOneWidget);
     expect(find.text('Destination unknown'), findsOneWidget);
     expect(find.text('Aircraft data: adsb.lol (ODbL)'), findsOneWidget);

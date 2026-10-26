@@ -75,4 +75,10 @@ class Settings {
   }
 
   double get radiusKm => _prefs.getDouble('radiusKm') ?? defaultRadiusKm;
+
+  /// Temperatures in °F instead of °C. Metric by default.
+  bool get imperial => _prefs.getBool('units.imperial') ?? false;
+
+  Future<void> setImperial(bool imperial) =>
+      _prefs.setBool('units.imperial', imperial);
 }

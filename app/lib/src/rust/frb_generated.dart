@@ -70,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1365562922;
+  int get rustContentHash => 2137190470;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -89,6 +89,11 @@ abstract class RustLibApi extends BaseApi {
     required List<int> airlinesGz,
   });
 
+  Future<void> crateApiSkySkyHandleLoadRegions({
+    required SkyHandle that,
+    required List<int> regionsGz,
+  });
+
   SkyHandle crateApiSkySkyHandleNew({
     required Source primary,
     required int seed,
@@ -99,6 +104,7 @@ abstract class RustLibApi extends BaseApi {
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   });
 
   Source crateApiSkySkyHandlePrimary({required SkyHandle that});
@@ -117,6 +123,7 @@ abstract class RustLibApi extends BaseApi {
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   });
 
   Source crateApiSkyChoosePrimarySource({required double roll});
@@ -189,6 +196,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateApiSkySkyHandleLoadRegions({
+    required SkyHandle that,
+    required List<int> regionsGz,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          sse_encode_list_prim_u_8_loose(regionsGz, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSkySkyHandleLoadRegionsConstMeta,
+        argValues: [that, regionsGz],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleLoadRegionsConstMeta =>
+      const TaskConstMeta(
+        debugName: "SkyHandle_load_regions",
+        argNames: ["that", "regionsGz"],
+      );
+
+  @override
   SkyHandle crateApiSkySkyHandleNew({
     required Source primary,
     required int seed,
@@ -199,7 +244,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_source(primary, serializer);
           sse_encode_u_32(seed, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -224,6 +269,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -236,10 +282,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_f_64(lat, serializer);
           sse_encode_f_64(lon, serializer);
           sse_encode_f_64(radiusKm, serializer);
+          sse_encode_bool(imperial, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 4,
             port: port_,
           );
         },
@@ -248,7 +295,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiSkySkyHandlePollConstMeta,
-        argValues: [that, lat, lon, radiusKm],
+        argValues: [that, lat, lon, radiusKm, imperial],
         apiImpl: this,
       ),
     );
@@ -256,7 +303,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiSkySkyHandlePollConstMeta => const TaskConstMeta(
     debugName: "SkyHandle_poll",
-    argNames: ["that", "lat", "lon", "radiusKm"],
+    argNames: ["that", "lat", "lon", "radiusKm", "imperial"],
   );
 
   @override
@@ -269,7 +316,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_source,
@@ -299,7 +346,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_box_autoadd_usage(usage, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -328,7 +375,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_usage,
@@ -352,6 +399,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -366,10 +414,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_f_64(lat, serializer);
           sse_encode_f_64(lon, serializer);
           sse_encode_f_64(radiusKm, serializer);
+          sse_encode_bool(imperial, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -378,7 +427,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiSkySkyHandleViewFromSnapshotConstMeta,
-        argValues: [that, source, body, lat, lon, radiusKm],
+        argValues: [that, source, body, lat, lon, radiusKm, imperial],
         apiImpl: this,
       ),
     );
@@ -387,7 +436,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiSkySkyHandleViewFromSnapshotConstMeta =>
       const TaskConstMeta(
         debugName: "SkyHandle_view_from_snapshot",
-        argNames: ["that", "source", "body", "lat", "lon", "radiusKm"],
+        argNames: [
+          "that",
+          "source",
+          "body",
+          "lat",
+          "lon",
+          "radiusKm",
+          "imperial",
+        ],
       );
 
   @override
@@ -397,7 +454,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_f_64(roll, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_source,
@@ -422,7 +479,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_credit,
@@ -444,7 +501,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -469,7 +526,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 12,
             port: port_,
           );
         },
@@ -493,7 +550,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_poll_timing,
@@ -560,6 +617,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
   double dco_decode_box_autoadd_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
@@ -617,18 +680,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   FlightView dco_decode_flight_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9)
-      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return FlightView(
       key: dco_decode_String(arr[0]),
       title: dco_decode_String(arr[1]),
       destination: dco_decode_opt_String(arr[2]),
       origin: dco_decode_opt_String(arr[3]),
       localTime: dco_decode_opt_String(arr[4]),
-      landingIn: dco_decode_opt_String(arr[5]),
-      line: dco_decode_String(arr[6]),
-      distanceKm: dco_decode_f_64(arr[7]),
-      altitudeM: dco_decode_opt_box_autoadd_f_64(arr[8]),
+      weather: dco_decode_opt_String(arr[5]),
+      landingIn: dco_decode_opt_String(arr[6]),
+      landsNearby: dco_decode_bool(arr[7]),
+      journey: dco_decode_opt_String(arr[8]),
+      line: dco_decode_String(arr[9]),
+      distanceKm: dco_decode_f_64(arr[10]),
+      altitudeM: dco_decode_opt_box_autoadd_f_64(arr[11]),
     );
   }
 
@@ -831,6 +897,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_f_64(deserializer));
@@ -884,7 +956,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_destination = sse_decode_opt_String(deserializer);
     var var_origin = sse_decode_opt_String(deserializer);
     var var_localTime = sse_decode_opt_String(deserializer);
+    var var_weather = sse_decode_opt_String(deserializer);
     var var_landingIn = sse_decode_opt_String(deserializer);
+    var var_landsNearby = sse_decode_bool(deserializer);
+    var var_journey = sse_decode_opt_String(deserializer);
     var var_line = sse_decode_String(deserializer);
     var var_distanceKm = sse_decode_f_64(deserializer);
     var var_altitudeM = sse_decode_opt_box_autoadd_f_64(deserializer);
@@ -894,7 +969,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       destination: var_destination,
       origin: var_origin,
       localTime: var_localTime,
+      weather: var_weather,
       landingIn: var_landingIn,
+      landsNearby: var_landsNearby,
+      journey: var_journey,
       line: var_line,
       distanceKm: var_distanceKm,
       altitudeM: var_altitudeM,
@@ -1076,12 +1154,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
-  }
-
-  @protected
   void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
     SkyHandle self,
@@ -1140,6 +1212,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_64(self, serializer);
@@ -1191,7 +1269,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.destination, serializer);
     sse_encode_opt_String(self.origin, serializer);
     sse_encode_opt_String(self.localTime, serializer);
+    sse_encode_opt_String(self.weather, serializer);
     sse_encode_opt_String(self.landingIn, serializer);
+    sse_encode_bool(self.landsNearby, serializer);
+    sse_encode_opt_String(self.journey, serializer);
     sse_encode_String(self.line, serializer);
     sse_encode_f_64(self.distanceKm, serializer);
     sse_encode_opt_box_autoadd_f_64(self.altitudeM, serializer);
@@ -1356,12 +1437,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putBigUint64(self);
   }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
-  }
 }
 
 @sealed
@@ -1395,17 +1470,25 @@ class SkyHandleImpl extends RustOpaque implements SkyHandle {
     airlinesGz: airlinesGz,
   );
 
+  /// Load the bundled countries and seas (D33).
+  Future<void> loadRegions({required List<int> regionsGz}) => RustLib
+      .instance
+      .api
+      .crateApiSkySkyHandleLoadRegions(that: this, regionsGz: regionsGz);
+
   /// Fetch what is overhead. `lat`/`lon` stay on the device; only a
   /// rounded point (~1 km) is sent.
   Future<PollResult> poll({
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   }) => RustLib.instance.api.crateApiSkySkyHandlePoll(
     that: this,
     lat: lat,
     lon: lon,
     radiusKm: radiusKm,
+    imperial: imperial,
   );
 
   Source primary() =>
@@ -1424,6 +1507,7 @@ class SkyHandleImpl extends RustOpaque implements SkyHandle {
     required double lat,
     required double lon,
     required double radiusKm,
+    required bool imperial,
   }) => RustLib.instance.api.crateApiSkySkyHandleViewFromSnapshot(
     that: this,
     source: source,
@@ -1431,5 +1515,6 @@ class SkyHandleImpl extends RustOpaque implements SkyHandle {
     lat: lat,
     lon: lon,
     radiusKm: radiusKm,
+    imperial: imperial,
   );
 }

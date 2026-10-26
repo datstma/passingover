@@ -74,7 +74,7 @@ class _LocationSheetState extends State<_LocationSheet> {
         mainAxisSize: .min,
         crossAxisAlignment: .stretch,
         children: [
-          Text('Location', style: text.titleLarge),
+          Text('Location and units', style: text.titleLarge),
           const SizedBox(height: 8),
           Text(
             'Your location stays on this device. Only a point rounded to about '
@@ -139,6 +139,21 @@ class _LocationSheetState extends State<_LocationSheet> {
               onPressed: _useCoordinates,
               child: const Text('Use these coordinates'),
             ),
+          ),
+          const SizedBox(height: 16),
+          Text('Temperatures', style: text.titleSmall),
+          const SizedBox(height: 8),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('°C')),
+              ButtonSegment(value: true, label: Text('°F')),
+            ],
+            selected: {widget.controller.imperial},
+            showSelectedIcon: false,
+            onSelectionChanged: (selection) async {
+              await widget.controller.setImperial(selection.first);
+              if (mounted) setState(() {});
+            },
           ),
         ],
       ),

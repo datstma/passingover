@@ -12,6 +12,8 @@ use passingover_core::http::{user_agent, UreqClient};
 use passingover_core::position::{
     choose_primary, AdsbFi, AdsbLol, DailyUsage, FetchError, PositionSource, SourceId,
 };
+use passingover_core::regions::Regions;
+use passingover_core::story::Units;
 use passingover_core::{credits, story, Overhead, Sky};
 
 /// An aircraft position source (D17).
@@ -57,10 +59,17 @@ pub struct FlightView {
     /// Destination city, e.g. `Chicago`.
     pub destination: Option<String>,
     pub origin: Option<String>,
-    /// Wall-clock time at the destination, `HH:MM`.
+    /// Wall-clock time at the destination, `HH:MM`; not set when it lands
+    /// nearby.
     pub local_time: Option<String>,
+    /// `9°C and overcast`; not set when it lands nearby.
+    pub weather: Option<String>,
     /// `about 7 h 40 min`.
     pub landing_in: Option<String>,
+    /// The destination is near the user.
+    pub lands_nearby: bool,
+    /// "Left Stockholm about 1 h 10 min ago and will cross …".
+    pub journey: Option<String>,
     /// The whole story in one sentence.
     pub line: String,
     pub distance_km: f64,
@@ -162,6 +171,13 @@ impl SkyHandle {
         Ok(info)
     }
 
+    /// Load the bundled countries and seas (D33).
+    pub fn load_regions(&mut self, regions_gz: Vec<u8>) -> Result<(), String> {
+        let regions = Regions::from_gzip(&regions_gz).map_err(|e| e.to_string())?;
+        self.sky.set_regions(regions);
+        Ok(())
+    }
+
     #[frb(sync)]
     pub fn primary(&self) -> Source {
         self.sky.primary().into()
@@ -188,7 +204,7 @@ impl SkyHandle {
 
     /// Fetch what is overhead. `lat`/`lon` stay on the device; only a
     /// rounded point (~1 km) is sent.
-    pub fn poll(&mut self, lat: f64, lon: f64, radius_km: f64) -> PollResult {
+    pub fn poll(&mut self, lat: f64, lon: f64, radius_km: f64, imperial: bool) -> PollResult {
         let (here, radius) = match place(lat, lon, radius_km) {
             Ok(p) => p,
             Err(error) => return failure(error, None),
@@ -199,7 +215,7 @@ impl SkyHandle {
             .poll(&self.client, here, radius, wall, Instant::now())
         {
             Ok(overhead) => PollResult {
-                view: Some(view(&overhead, wall)),
+                view: Some(view(&overhead, wall, units(imperial))),
                 error: None,
                 retry_after_secs: None,
             },
@@ -220,6 +236,7 @@ impl SkyHandle {
         lat: f64,
         lon: f64,
         radius_km: f64,
+        imperial: bool,
     ) -> Result<NowView, String> {
         let (here, radius) = place(lat, lon, radius_km)?;
         let snapshot = match SourceId::from(source) {
@@ -230,7 +247,15 @@ impl SkyHandle {
         let overhead = self
             .sky
             .describe(&snapshot, here, radius, None, Instant::now());
-        Ok(view(&overhead, snapshot.time))
+        Ok(view(&overhead, snapshot.time, units(imperial)))
+    }
+}
+
+fn units(imperial: bool) -> Units {
+    if imperial {
+        Units::Imperial
+    } else {
+        Units::Metric
     }
 }
 
@@ -257,13 +282,19 @@ fn credit(c: credits::Credit) -> Credit {
 }
 
 /// `now` is the wall clock used for local times at destinations.
-fn view(overhead: &Overhead, now: SystemTime) -> NowView {
+fn view(overhead: &Overhead, now: SystemTime, units: Units) -> NowView {
     let mut used = vec![credit(credits::for_source(overhead.source))];
     used.extend(
         overhead
             .route_sources()
             .into_iter()
             .map(|s| credit(credits::for_route_source(s))),
+    );
+    used.extend(
+        overhead
+            .weather_sources()
+            .into_iter()
+            .map(|s| credit(credits::for_weather_source(s))),
     );
     let updated_unix_ms = overhead
         .time
@@ -273,7 +304,7 @@ fn view(overhead: &Overhead, now: SystemTime) -> NowView {
         flights: overhead
             .flights
             .iter()
-            .map(|f| flight_view(f, now))
+            .map(|f| flight_view(f, now, units))
             .collect(),
         credits: used,
         source: overhead.source.into(),
@@ -281,18 +312,27 @@ fn view(overhead: &Overhead, now: SystemTime) -> NowView {
     }
 }
 
-fn flight_view(f: &Flight, now: SystemTime) -> FlightView {
+fn flight_view(f: &Flight, now: SystemTime, units: Units) -> FlightView {
     let destination = f.leg.as_ref().map(|l| &l.destination);
+    let far = !f.lands_nearby;
     FlightView {
         key: f.aircraft.icao24.clone(),
         title: story::title(f).to_owned(),
         destination: destination.map(|d| d.place().to_owned()),
         origin: f.leg.as_ref().map(|l| l.origin.place().to_owned()),
         local_time: destination
+            .filter(|_| far)
             .and_then(|d| d.time_zone.as_deref())
             .and_then(|tz| local_time(tz, now)),
+        weather: f
+            .weather
+            .as_ref()
+            .filter(|_| far)
+            .map(|w| story::weather_phrase(w, units)),
         landing_in: f.time_to_landing.map(story::landing_phrase),
-        line: story::dreamy_line(f, now),
+        lands_nearby: f.lands_nearby,
+        journey: story::journey(f),
+        line: story::dreamy_line(f, now, units),
         distance_km: f.distance_m / 1000.0,
         altitude_m: f.aircraft.altitude_m(),
     }
@@ -336,7 +376,7 @@ mod tests {
         ))
         .unwrap();
         let view = handle_with_data()
-            .view_from_snapshot(Source::AdsbLol, body, 55.62, 12.66, 18.52)
+            .view_from_snapshot(Source::AdsbLol, body, 55.62, 12.66, 18.52, false)
             .unwrap();
         assert_eq!(view.source, Source::AdsbLol);
         assert_eq!(view.updated_unix_ms, 1_792_966_614_001);
@@ -346,8 +386,15 @@ mod tests {
         assert_eq!(sk2802.key, "4ac9e2");
         assert_eq!(sk2802.destination.as_deref(), Some("Copenhagen"));
         assert_eq!(sk2802.origin.as_deref(), Some("Lisbon"));
-        assert_eq!(sk2802.local_time.as_deref(), Some("23:16"));
+        // Landing at Copenhagen, where the user is: no time or weather there.
+        assert!(sk2802.lands_nearby);
+        assert_eq!(sk2802.local_time, None);
         assert!(sk2802.landing_in.as_deref().unwrap().starts_with("about "));
+        assert!(sk2802
+            .journey
+            .as_deref()
+            .unwrap()
+            .starts_with("Left Lisbon about "));
         let credits: Vec<&str> = view.credits.iter().map(|c| c.url.as_str()).collect();
         assert_eq!(
             credits,
@@ -361,10 +408,11 @@ mod tests {
     #[test]
     fn bad_input_is_an_error_not_a_panic() {
         let mut handle = SkyHandle::new(Source::AdsbFi, 1);
-        let result = handle.poll(91.0, 0.0, 30.0);
+        let result = handle.poll(91.0, 0.0, 30.0, false);
         assert!(result.view.is_none());
         assert!(result.error.unwrap().contains("latitude"));
         assert!(handle.load_data(vec![1, 2, 3], vec![], vec![]).is_err());
+        assert!(handle.load_regions(vec![1, 2, 3]).is_err());
     }
 
     #[test]

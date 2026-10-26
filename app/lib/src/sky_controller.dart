@@ -20,7 +20,8 @@ enum SkyPhase {
 }
 
 /// Keeps the "Now" view up to date: polls every ~15 s while visible, pauses
-/// while hidden, and saves the daily request count (D15).
+/// while hidden, never polls more often than the core allows, and saves the
+/// daily request count (D15).
 class SkyController extends ChangeNotifier {
   SkyController({
     required this._api,
@@ -57,9 +58,11 @@ class SkyController extends ChangeNotifier {
   bool _polling = false;
   bool _pollAgain = false;
   DateTime? _locatedAt;
+  DateTime? _lastPollAt;
 
   LocationMode get locationMode => _settings.locationMode;
   LatLon? get manualLocation => _settings.manualLocation;
+  bool get imperial => _settings.imperial;
 
   Future<void> start() async {
     hasBundledData = await _api.loadBundledData();
@@ -84,14 +87,20 @@ class SkyController extends ChangeNotifier {
     await _settings.setLocationMode(LocationMode.device);
     _locatedAt = null;
     await _locate();
-    await _poll();
+    _pollSoon();
   }
 
   Future<void> useManualLocation(LatLon place) async {
     await _settings.setManualLocation(place);
     await _settings.setLocationMode(LocationMode.manual);
     await _locate();
-    await _poll();
+    _pollSoon();
+  }
+
+  Future<void> setImperial(bool imperial) async {
+    await _settings.setImperial(imperial);
+    notifyListeners();
+    _pollSoon();
   }
 
   Future<void> _tick() async {
@@ -118,6 +127,20 @@ class SkyController extends ChangeNotifier {
     locationProblem = result.problem;
   }
 
+  /// Poll as soon as the minimum interval since the last poll allows.
+  void _pollSoon() {
+    if (_paused) return;
+    final last = _lastPollAt;
+    final min = Duration(milliseconds: _api.timing.minIntervalMs);
+    final wait = last == null ? Duration.zero : min - _clock().difference(last);
+    _timer?.cancel();
+    if (wait <= Duration.zero) {
+      unawaited(_poll());
+    } else {
+      _timer = Timer(wait, () => unawaited(_poll()));
+    }
+  }
+
   Future<void> _poll() async {
     if (_polling) {
       _pollAgain = true;
@@ -133,9 +156,15 @@ class SkyController extends ChangeNotifier {
     }
     phase = SkyPhase.watching;
     _polling = true;
+    _lastPollAt = _clock();
     PollResult result;
     try {
-      result = await _api.poll(place.lat, place.lon, _settings.radiusKm);
+      result = await _api.poll(
+        place.lat,
+        place.lon,
+        _settings.radiusKm,
+        imperial: _settings.imperial,
+      );
     } catch (e) {
       result = PollResult(error: e.toString());
     } finally {
@@ -152,7 +181,8 @@ class SkyController extends ChangeNotifier {
     notifyListeners();
     if (_pollAgain) {
       _pollAgain = false;
-      return _poll();
+      _pollSoon();
+      return;
     }
     _schedule(result.retryAfterSecs);
   }

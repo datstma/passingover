@@ -24,6 +24,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// and a second start fails on Linux and Windows.
 const live = bool.fromEnvironment('PASSINGOVER_LIVE');
 
+/// Where the live test looks (a public place): central Copenhagen unless
+/// `--dart-define=PASSINGOVER_LIVE_AT=lat,lon` says otherwise.
+const liveAt = String.fromEnvironment(
+  'PASSINGOVER_LIVE_AT',
+  defaultValue: '55.676,12.568',
+);
+
 /// A minimal adsb.lol response: one airliner, one tower.
 final _snapshot = utf8.encode(
   jsonEncode({
@@ -73,9 +80,11 @@ void main() {
       lat: 55.62,
       lon: 12.66,
       radiusKm: 30,
+      imperial: false,
     );
     expect(view.flights, hasLength(1), reason: 'the tower is not flying');
     expect(view.flights.single.title, 'SAS2802');
+    expect(view.flights.single.landsNearby, isFalse);
     expect(
       view.flights.single.destination,
       isNull,
@@ -87,11 +96,11 @@ void main() {
   testWidgets('live: the Now screen fills from the real sources', (
     tester,
   ) async {
-    // A public place: central Copenhagen.
+    final [lat, lon] = liveAt.split(',').map(double.parse).toList();
     SharedPreferences.setMockInitialValues({
       'location.mode': 'manual',
-      'location.lat': 55.676,
-      'location.lon': 12.568,
+      'location.lat': lat,
+      'location.lon': lon,
     });
     final settings = Settings(await SharedPreferences.getInstance());
     final controller = SkyController(
@@ -105,9 +114,10 @@ void main() {
 
     expect(controller.error, isNull, reason: 'the poll worked');
     expect(controller.view, isNotNull);
-    debugPrint(
-      'LIVE flights: ${controller.view!.flights.map((f) => f.line).toList()}',
-    );
+    for (final f in controller.view!.flights) {
+      debugPrint('LIVE ${f.line} ${f.journey ?? ''}');
+    }
+    debugPrint('LIVE credits: ${controller.view!.credits.map((c) => c.text)}');
     debugPrint('LIVE bundled data: ${controller.hasBundledData}');
 
     controller.dispose();
