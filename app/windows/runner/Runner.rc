@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "se.mansby" "\0"
-            VALUE "FileDescription", "passingover" "\0"
+            VALUE "FileDescription", "Passing Over" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "passingover" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 se.mansby. All rights reserved." "\0"
             VALUE "OriginalFilename", "passingover.exe" "\0"
-            VALUE "ProductName", "passingover" "\0"
+            VALUE "ProductName", "Passing Over" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -116,6 +116,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PollResult dco_decode_poll_result(dynamic raw);
 
   @protected
+  PollTiming dco_decode_poll_timing(dynamic raw);
+
+  @protected
   Source dco_decode_source(dynamic raw);
 
   @protected
@@ -219,6 +222,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PollResult sse_decode_poll_result(SseDeserializer deserializer);
+
+  @protected
+  PollTiming sse_decode_poll_timing(SseDeserializer deserializer);
 
   @protected
   Source sse_decode_source(SseDeserializer deserializer);
@@ -340,6 +346,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_poll_result(PollResult self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_poll_timing(PollTiming self, SseSerializer serializer);
 
   @protected
   void sse_encode_source(Source self, SseSerializer serializer);

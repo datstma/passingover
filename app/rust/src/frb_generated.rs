@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1100230098;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1365562922;
 
 // Section: executor
 
@@ -518,6 +518,35 @@ fn wire__crate__api__hello__init_app_impl(
         },
     )
 }
+fn wire__crate__api__sky__poll_timing_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "poll_timing",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::sky::poll_timing())?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
 
 // Section: related_funcs
 
@@ -736,6 +765,20 @@ impl SseDecode for crate::api::sky::PollResult {
     }
 }
 
+impl SseDecode for crate::api::sky::PollTiming {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_intervalMs = <u32>::sse_decode(deserializer);
+        let mut var_jitterMs = <u32>::sse_decode(deserializer);
+        let mut var_minIntervalMs = <u32>::sse_decode(deserializer);
+        return crate::api::sky::PollTiming {
+            interval_ms: var_intervalMs,
+            jitter_ms: var_jitterMs,
+            min_interval_ms: var_minIntervalMs,
+        };
+    }
+}
+
 impl SseDecode for crate::api::sky::Source {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -832,6 +875,7 @@ fn pde_ffi_dispatcher_sync_impl(
         8 => wire__crate__api__sky__choose_primary_source_impl(ptr, rust_vec_len, data_len),
         9 => wire__crate__api__sky__data_credits_impl(ptr, rust_vec_len, data_len),
         10 => wire__crate__api__hello__hello_impl(ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__sky__poll_timing_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -944,6 +988,25 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::sky::PollResult>
     for crate::api::sky::PollResult
 {
     fn into_into_dart(self) -> crate::api::sky::PollResult {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sky::PollTiming {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.interval_ms.into_into_dart().into_dart(),
+            self.jitter_ms.into_into_dart().into_dart(),
+            self.min_interval_ms.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sky::PollTiming {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sky::PollTiming>
+    for crate::api::sky::PollTiming
+{
+    fn into_into_dart(self) -> crate::api::sky::PollTiming {
         self
     }
 }
@@ -1144,6 +1207,15 @@ impl SseEncode for crate::api::sky::PollResult {
         <Option<crate::api::sky::NowView>>::sse_encode(self.view, serializer);
         <Option<String>>::sse_encode(self.error, serializer);
         <Option<u32>>::sse_encode(self.retry_after_secs, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sky::PollTiming {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.interval_ms, serializer);
+        <u32>::sse_encode(self.jitter_ms, serializer);
+        <u32>::sse_encode(self.min_interval_ms, serializer);
     }
 }
 

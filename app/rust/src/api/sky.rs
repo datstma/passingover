@@ -99,6 +99,25 @@ pub struct DataInfo {
     pub airports: u32,
 }
 
+/// How often to poll (D15): every `interval_ms` plus or minus `jitter_ms`,
+/// never more often than `min_interval_ms`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PollTiming {
+    pub interval_ms: u32,
+    pub jitter_ms: u32,
+    pub min_interval_ms: u32,
+}
+
+#[frb(sync)]
+pub fn poll_timing() -> PollTiming {
+    use passingover_core::polite::{MIN_POLL_INTERVAL, POLL_INTERVAL, POLL_JITTER};
+    PollTiming {
+        interval_ms: POLL_INTERVAL.as_millis() as u32,
+        jitter_ms: POLL_JITTER.as_millis() as u32,
+        min_interval_ms: MIN_POLL_INTERVAL.as_millis() as u32,
+    }
+}
+
 /// Pick this install's primary source from a uniform `roll` in 0..1 (D17).
 #[frb(sync)]
 pub fn choose_primary_source(roll: f64) -> Source {

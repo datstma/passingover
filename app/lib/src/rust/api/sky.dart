@@ -8,7 +8,9 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `credit`, `failure`, `flight_view`, `place`, `view`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`
+
+PollTiming pollTiming() => RustLib.instance.api.crateApiSkyPollTiming();
 
 /// Pick this install's primary source from a uniform `roll` in 0..1 (D17).
 Source choosePrimarySource({required double roll}) =>
@@ -211,6 +213,33 @@ class PollResult {
           view == other.view &&
           error == other.error &&
           retryAfterSecs == other.retryAfterSecs;
+}
+
+/// How often to poll (D15): every `interval_ms` plus or minus `jitter_ms`,
+/// never more often than `min_interval_ms`.
+class PollTiming {
+  final int intervalMs;
+  final int jitterMs;
+  final int minIntervalMs;
+
+  const PollTiming({
+    required this.intervalMs,
+    required this.jitterMs,
+    required this.minIntervalMs,
+  });
+
+  @override
+  int get hashCode =>
+      intervalMs.hashCode ^ jitterMs.hashCode ^ minIntervalMs.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PollTiming &&
+          runtimeType == other.runtimeType &&
+          intervalMs == other.intervalMs &&
+          jitterMs == other.jitterMs &&
+          minIntervalMs == other.minIntervalMs;
 }
 
 /// An aircraft position source (D17).

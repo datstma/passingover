@@ -70,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1100230098;
+  int get rustContentHash => 1365562922;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -126,6 +126,8 @@ abstract class RustLibApi extends BaseApi {
   String crateApiHelloHello();
 
   Future<void> crateApiHelloInitApp();
+
+  PollTiming crateApiSkyPollTiming();
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_SkyHandle;
@@ -485,6 +487,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHelloInitAppConstMeta =>
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
+  @override
+  PollTiming crateApiSkyPollTiming() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_poll_timing,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkyPollTimingConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkyPollTimingConstMeta =>
+      const TaskConstMeta(debugName: "poll_timing", argNames: []);
+
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_SkyHandle => wire
       .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle;
@@ -692,6 +716,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       view: dco_decode_opt_box_autoadd_now_view(arr[0]),
       error: dco_decode_opt_String(arr[1]),
       retryAfterSecs: dco_decode_opt_box_autoadd_u_32(arr[2]),
+    );
+  }
+
+  @protected
+  PollTiming dco_decode_poll_timing(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return PollTiming(
+      intervalMs: dco_decode_u_32(arr[0]),
+      jitterMs: dco_decode_u_32(arr[1]),
+      minIntervalMs: dco_decode_u_32(arr[2]),
     );
   }
 
@@ -987,6 +1024,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PollTiming sse_decode_poll_timing(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_intervalMs = sse_decode_u_32(deserializer);
+    var var_jitterMs = sse_decode_u_32(deserializer);
+    var var_minIntervalMs = sse_decode_u_32(deserializer);
+    return PollTiming(
+      intervalMs: var_intervalMs,
+      jitterMs: var_jitterMs,
+      minIntervalMs: var_minIntervalMs,
+    );
+  }
+
+  @protected
   Source sse_decode_source(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
@@ -1260,6 +1310,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_now_view(self.view, serializer);
     sse_encode_opt_String(self.error, serializer);
     sse_encode_opt_box_autoadd_u_32(self.retryAfterSecs, serializer);
+  }
+
+  @protected
+  void sse_encode_poll_timing(PollTiming self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.intervalMs, serializer);
+    sse_encode_u_32(self.jitterMs, serializer);
+    sse_encode_u_32(self.minIntervalMs, serializer);
   }
 
   @protected

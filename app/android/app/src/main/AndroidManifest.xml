@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Aircraft, route and data downloads. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Approximate location only: rounded to ~1 km before it is sent. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
-        android:label="passingover"
+        android:label="Passing Over"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
