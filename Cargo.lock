@@ -811,6 +811,7 @@ name = "passingover-core"
 version = "0.1.0"
 dependencies = [
  "fastrand",
+ "flate2",
  "jiff",
  "serde",
  "serde_json",

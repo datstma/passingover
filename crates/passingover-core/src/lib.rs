@@ -13,12 +13,14 @@ pub mod http;
 pub mod polite;
 pub mod position;
 pub mod route;
+pub mod sky;
 pub mod story;
 
 pub use aircraft::Aircraft;
 pub use airport::{Airline, Airport};
 pub use flight::Flight;
 pub use geo::{Coordinate, GeoError, QueryPoint, Radius};
+pub use sky::{Overhead, Sky};
 
 /// Version of the core crate, as set in Cargo.toml.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

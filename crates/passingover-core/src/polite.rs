@@ -28,6 +28,10 @@ pub const DEFAULT_RATE_LIMIT_WAIT: Duration = Duration::from_secs(60);
 /// Below this share of a rate-limit window, rest the source until it resets.
 pub const LOW_QUOTA_SHARE: f64 = 0.10;
 
+/// Position requests per UTC day a device sends to adsb.lol: 90 % of the
+/// 500 a day its rate-limit header announces (D15).
+pub const ADSB_LOL_DAILY_REQUESTS: u32 = 450;
+
 /// Share of installs that use adsb.lol as their primary source; the rest use
 /// adsb.fi (D17). Shift it in a release if an operator asks.
 pub const ADSB_LOL_PRIMARY_SHARE: f64 = 0.5;

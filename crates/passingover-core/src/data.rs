@@ -16,6 +16,7 @@
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use thiserror::Error;
@@ -35,6 +36,11 @@ pub enum DataError {
     #[error("{}: {source}", path.display())]
     Io {
         path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("{file}: not valid gzipped UTF-8: {source}")]
+    Gzip {
+        file: &'static str,
         source: std::io::Error,
     },
     #[error("{file} line {line}: {message}")]
@@ -81,7 +87,17 @@ impl StandingData {
         )
     }
 
-    /// Parse the three tables from memory, e.g. from bundled assets.
+    /// Load the three tables from gzipped bytes, as the app bundles them
+    /// (D29).
+    pub fn from_gzip(routes: &[u8], airports: &[u8], airlines: &[u8]) -> Result<Self, DataError> {
+        Self::parse(
+            gunzip(ROUTES_FILE, routes)?,
+            &gunzip(AIRPORTS_FILE, airports)?,
+            &gunzip(AIRLINES_FILE, airlines)?,
+        )
+    }
+
+    /// Parse the three tables from memory.
     pub fn parse(routes: String, airports: &str, airlines: &str) -> Result<Self, DataError> {
         let route_starts = index_routes(&routes)?;
         let airports = parse_airports(airports)?;
@@ -149,6 +165,14 @@ impl StandingData {
         let rest = &self.routes[start as usize..];
         rest.split_once('\n').map_or(rest, |(line, _)| line)
     }
+}
+
+fn gunzip(file: &'static str, bytes: &[u8]) -> Result<String, DataError> {
+    let mut text = String::new();
+    flate2::read::GzDecoder::new(bytes)
+        .read_to_string(&mut text)
+        .map_err(|source| DataError::Gzip { file, source })?;
+    Ok(text)
 }
 
 /// The callsign (airline code followed by number) of a route line, as bytes.
@@ -328,6 +352,25 @@ mod tests {
         assert_eq!(data.airline("SAS").unwrap().iata.as_deref(), Some("SK"));
         assert_eq!(data.airline_code_for_iata("SK"), Some("SAS"));
         assert_eq!(data.airline_code_for_iata("U2"), Some("U2"));
+    }
+
+    #[test]
+    fn loads_gzipped_tables() {
+        use std::io::Write;
+        let gz = |text: &str| {
+            let mut e = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+            e.write_all(text.as_bytes()).unwrap();
+            e.finish().unwrap()
+        };
+        let data = StandingData::from_gzip(
+            &gz(&format!("{ROUTES_HEADER}\nSAS\t945\tESSA-KORD\n")),
+            &gz(&format!("{AIRPORTS_HEADER}\n")),
+            &gz(&format!("{AIRLINES_HEADER}\n")),
+        )
+        .unwrap();
+        assert_eq!(data.route_count(), 1);
+        let err = StandingData::from_gzip(b"not gzip", b"", b"").unwrap_err();
+        assert!(err.to_string().contains("routes.tsv"), "{err}");
     }
 
     #[test]

@@ -13,7 +13,7 @@ mod readsb;
 
 pub use adsb_fi::AdsbFi;
 pub use adsb_lol::AdsbLol;
-pub use feed::{FetchError, PositionFeed, choose_primary, source_for};
+pub use feed::{DailyUsage, FetchError, PositionFeed, choose_primary, source_for, utc_day};
 
 use std::time::SystemTime;
 
@@ -51,6 +51,15 @@ impl SourceId {
         match self {
             SourceId::AdsbLol => "adsb.lol",
             SourceId::AdsbFi => "adsb.fi",
+        }
+    }
+
+    /// Requests per UTC day this device may send, if the source has a daily
+    /// limit (D15).
+    pub fn daily_request_limit(self) -> Option<u32> {
+        match self {
+            SourceId::AdsbLol => Some(crate::polite::ADSB_LOL_DAILY_REQUESTS),
+            SourceId::AdsbFi => None,
         }
     }
 

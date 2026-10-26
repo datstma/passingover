@@ -3,7 +3,7 @@
 
 #![cfg(feature = "http")]
 
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 
 use passingover_core::geo::{Coordinate, QueryPoint, Radius};
 use passingover_core::http::{UreqClient, user_agent};
@@ -26,7 +26,9 @@ fn area() -> Area {
 fn both_position_sources_answer() {
     for primary in [SourceId::AdsbLol, SourceId::AdsbFi] {
         let mut feed = PositionFeed::new(primary, 1);
-        let snapshot = feed.fetch(&client(), &area(), Instant::now()).unwrap();
+        let snapshot = feed
+            .fetch(&client(), &area(), SystemTime::now(), Instant::now())
+            .unwrap();
         assert_eq!(snapshot.source, primary, "{primary:?} did not answer");
     }
 }

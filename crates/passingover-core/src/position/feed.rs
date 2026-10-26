@@ -6,9 +6,10 @@
 //! answers 401 or 403 is left alone for the rest of the session. After
 //! [`FAILURES_BEFORE_FAILOVER`] consecutive failures, or on 401/403/429, the
 //! feed fails over to the other source and gives the primary another try
-//! every [`PRIMARY_RETRY_INTERVAL`].
+//! every [`PRIMARY_RETRY_INTERVAL`]. A source with a daily request limit
+//! sits out the rest of the UTC day once it is used up ([`DailyUsage`]).
 
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use thiserror::Error;
 
@@ -49,12 +50,69 @@ pub enum FetchError {
     Failed { from: SourceId, reason: String },
 }
 
+/// Position requests sent per source on one UTC day (D15). The app saves it
+/// and restores it on start, so restarting doesn't reset the count.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct DailyUsage {
+    /// Days since the Unix epoch, UTC.
+    pub day: u32,
+    pub adsb_lol: u32,
+    pub adsb_fi: u32,
+}
+
+impl DailyUsage {
+    pub fn count(&self, id: SourceId) -> u32 {
+        match id {
+            SourceId::AdsbLol => self.adsb_lol,
+            SourceId::AdsbFi => self.adsb_fi,
+        }
+    }
+
+    fn add(&mut self, id: SourceId) {
+        match id {
+            SourceId::AdsbLol => self.adsb_lol += 1,
+            SourceId::AdsbFi => self.adsb_fi += 1,
+        }
+    }
+
+    /// Start counting afresh on a new day.
+    fn roll_to(&mut self, day: u32) {
+        if self.day != day {
+            *self = Self {
+                day,
+                ..Self::default()
+            };
+        }
+    }
+
+    fn exhausted(&self, id: SourceId) -> bool {
+        id.daily_request_limit()
+            .is_some_and(|limit| self.count(id) >= limit)
+    }
+}
+
+/// Days since the Unix epoch, UTC.
+pub fn utc_day(wall: SystemTime) -> u32 {
+    let secs = wall
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    (secs / 86_400) as u32
+}
+
+fn until_next_utc_day(wall: SystemTime) -> Duration {
+    let secs = wall
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    Duration::from_secs(86_400 - secs % 86_400)
+}
+
 /// Fetches snapshots from a primary source with the other as fallback.
 pub struct PositionFeed {
     /// Index 0 is the primary, 1 the fallback.
     slots: [Slot; 2],
     /// Set while failed over to the fallback.
     failed_over_at: Option<Instant>,
+    usage: DailyUsage,
     rng: fastrand::Rng,
 }
 
@@ -106,6 +164,7 @@ impl PositionFeed {
         Self {
             slots: [Slot::new(primary), Slot::new(fallback)],
             failed_over_at: None,
+            usage: DailyUsage::default(),
             rng: fastrand::Rng::with_seed(seed),
         }
     }
@@ -114,22 +173,37 @@ impl PositionFeed {
         self.slots[0].source.id()
     }
 
-    /// Fetch the aircraft in `area`. `now` is passed in so tests control time.
+    /// Requests sent today, to save across restarts.
+    pub fn usage(&self) -> DailyUsage {
+        self.usage
+    }
+
+    /// Restore saved usage; ignored on later calls if it's from another day.
+    pub fn set_usage(&mut self, usage: DailyUsage) {
+        self.usage = usage;
+    }
+
+    /// Fetch the aircraft in `area`. `wall` (UTC clock, for daily limits) and
+    /// `now` (monotonic, for backoff) are passed in so tests control time.
     pub fn fetch(
         &mut self,
         client: &dyn HttpClient,
         area: &Area,
+        wall: SystemTime,
         now: Instant,
     ) -> Result<Snapshot, FetchError> {
+        self.usage.roll_to(utc_day(wall));
         let order = match self.failed_over_at {
             Some(t) if now.duration_since(t) < PRIMARY_RETRY_INTERVAL => [1, 0],
             _ => [0, 1],
         };
         let mut last_error = None;
         for index in order {
-            if !self.slots[index].available(now) {
+            let id = self.slots[index].source.id();
+            if !self.slots[index].available(now) || self.usage.exhausted(id) {
                 continue;
             }
+            self.usage.add(id);
             let source = &self.slots[index].source;
             let outcome = match client.get(&source.request(area)) {
                 Err(e) => Outcome::Failed(e.to_string()),
@@ -153,7 +227,7 @@ impl PositionFeed {
             }
         }
         Err(last_error.unwrap_or_else(|| FetchError::Unavailable {
-            retry_after: self.next_available(now),
+            retry_after: self.next_available(wall, now),
         }))
     }
 
@@ -200,13 +274,19 @@ impl PositionFeed {
     }
 
     /// How long until some source is available, if any will be.
-    fn next_available(&self, now: Instant) -> Option<Duration> {
+    fn next_available(&self, wall: SystemTime, now: Instant) -> Option<Duration> {
         self.slots
             .iter()
             .filter(|s| !s.disabled)
             .map(|s| {
-                s.resting_until
-                    .map_or(Duration::ZERO, |t| t.saturating_duration_since(now))
+                let resting = s
+                    .resting_until
+                    .map_or(Duration::ZERO, |t| t.saturating_duration_since(now));
+                if self.usage.exhausted(s.source.id()) {
+                    resting.max(until_next_utc_day(wall))
+                } else {
+                    resting
+                }
             })
             .min()
     }
@@ -296,6 +376,11 @@ mod tests {
         }
     }
 
+    /// 2026-10-25 22:16:54 UTC.
+    fn wall() -> SystemTime {
+        SystemTime::UNIX_EPOCH + Duration::from_secs(1_792_966_614)
+    }
+
     fn feed() -> PositionFeed {
         PositionFeed::new(SourceId::AdsbLol, 7)
     }
@@ -307,7 +392,7 @@ mod tests {
     #[test]
     fn healthy_primary_is_the_only_source_asked() {
         let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
-        let snap = feed.fetch(&client, &area(), t0).unwrap();
+        let snap = feed.fetch(&client, &area(), wall(), t0).unwrap();
         assert_eq!(snap.source, SourceId::AdsbLol);
         assert_eq!(client.take_requested(), [LOL]);
     }
@@ -316,16 +401,16 @@ mod tests {
     fn a_failure_tries_the_fallback_once_and_rests_the_primary() {
         let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
         client.answer(LOL, 503, &[]);
-        let snap = feed.fetch(&client, &area(), t0).unwrap();
+        let snap = feed.fetch(&client, &area(), wall(), t0).unwrap();
         assert_eq!(snap.source, SourceId::AdsbFi);
         assert_eq!(client.take_requested(), [LOL, FI]);
 
         // Primary rests for at least half of the 15 s first step...
-        feed.fetch(&client, &area(), t0 + Duration::from_secs(5))
+        feed.fetch(&client, &area(), wall(), t0 + Duration::from_secs(5))
             .unwrap();
         assert_eq!(client.take_requested(), [FI]);
         // ...and is used again afterwards; one failure is no failover.
-        feed.fetch(&client, &area(), t0 + Duration::from_secs(16))
+        feed.fetch(&client, &area(), wall(), t0 + Duration::from_secs(16))
             .unwrap();
         assert_eq!(client.take_requested(), [LOL]);
     }
@@ -335,18 +420,23 @@ mod tests {
         let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
         for i in 0..3 {
             client.fail(LOL);
-            feed.fetch(&client, &area(), t0 + mins(20 * i)).unwrap();
+            feed.fetch(&client, &area(), wall(), t0 + mins(20 * i))
+                .unwrap();
             assert_eq!(client.take_requested(), [LOL, FI]);
         }
         let failed_over = t0 + mins(40);
         // Within five minutes only the fallback is asked, even though the
         // primary's backoff (at most 60 s here) is over.
-        feed.fetch(&client, &area(), failed_over + mins(4)).unwrap();
+        feed.fetch(&client, &area(), wall(), failed_over + mins(4))
+            .unwrap();
         assert_eq!(client.take_requested(), [FI]);
         // Then the primary gets another try, and success ends the failover.
-        let snap = feed.fetch(&client, &area(), failed_over + mins(5)).unwrap();
+        let snap = feed
+            .fetch(&client, &area(), wall(), failed_over + mins(5))
+            .unwrap();
         assert_eq!(snap.source, SourceId::AdsbLol);
-        feed.fetch(&client, &area(), failed_over + mins(6)).unwrap();
+        feed.fetch(&client, &area(), wall(), failed_over + mins(6))
+            .unwrap();
         assert_eq!(client.take_requested(), [LOL, LOL]);
     }
 
@@ -355,12 +445,12 @@ mod tests {
         let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
         client.answer(LOL, 429, &[("Retry-After", "600")]);
         assert_eq!(
-            feed.fetch(&client, &area(), t0).unwrap().source,
+            feed.fetch(&client, &area(), wall(), t0).unwrap().source,
             SourceId::AdsbFi
         );
-        feed.fetch(&client, &area(), t0 + mins(9)).unwrap();
+        feed.fetch(&client, &area(), wall(), t0 + mins(9)).unwrap();
         assert_eq!(client.take_requested(), [LOL, FI, FI]);
-        feed.fetch(&client, &area(), t0 + mins(11)).unwrap();
+        feed.fetch(&client, &area(), wall(), t0 + mins(11)).unwrap();
         assert_eq!(client.take_requested(), [LOL]);
     }
 
@@ -368,8 +458,9 @@ mod tests {
     fn refusal_disables_the_source_for_the_session() {
         let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
         client.answer(LOL, 403, &[]);
-        feed.fetch(&client, &area(), t0).unwrap();
-        feed.fetch(&client, &area(), t0 + mins(600)).unwrap();
+        feed.fetch(&client, &area(), wall(), t0).unwrap();
+        feed.fetch(&client, &area(), wall(), t0 + mins(600))
+            .unwrap();
         assert_eq!(client.take_requested(), [LOL, FI, FI]);
     }
 
@@ -383,12 +474,12 @@ mod tests {
         ];
         client.answer(LOL, 200, &low);
         assert_eq!(
-            feed.fetch(&client, &area(), t0).unwrap().source,
+            feed.fetch(&client, &area(), wall(), t0).unwrap().source,
             SourceId::AdsbLol
         );
-        feed.fetch(&client, &area(), t0 + Duration::from_secs(15))
+        feed.fetch(&client, &area(), wall(), t0 + Duration::from_secs(15))
             .unwrap();
-        feed.fetch(&client, &area(), t0 + Duration::from_secs(46))
+        feed.fetch(&client, &area(), wall(), t0 + Duration::from_secs(46))
             .unwrap();
         assert_eq!(client.take_requested(), [LOL, FI, LOL]);
     }
@@ -399,14 +490,14 @@ mod tests {
         client.answer(LOL, 429, &[("Retry-After", "120")]);
         client.answer(FI, 429, &[("Retry-After", "60")]);
         assert!(matches!(
-            feed.fetch(&client, &area(), t0),
+            feed.fetch(&client, &area(), wall(), t0),
             Err(FetchError::Failed {
                 from: SourceId::AdsbFi,
                 ..
             })
         ));
         assert_eq!(
-            feed.fetch(&client, &area(), t0 + Duration::from_secs(10)),
+            feed.fetch(&client, &area(), wall(), t0 + Duration::from_secs(10)),
             Err(FetchError::Unavailable {
                 retry_after: Some(Duration::from_secs(50))
             })
@@ -418,9 +509,9 @@ mod tests {
         );
         client.answer(LOL, 401, &[]);
         client.answer(FI, 403, &[]);
-        assert!(feed.fetch(&client, &area(), t0).is_err());
+        assert!(feed.fetch(&client, &area(), wall(), t0).is_err());
         assert_eq!(
-            feed.fetch(&client, &area(), t0 + mins(1)),
+            feed.fetch(&client, &area(), wall(), t0 + mins(1)),
             Err(FetchError::Unavailable { retry_after: None })
         );
     }
@@ -430,7 +521,7 @@ mod tests {
         let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
         client.push(LOL, Ok(Response::new(200, Vec::new(), b"<html>".to_vec())));
         assert_eq!(
-            feed.fetch(&client, &area(), t0).unwrap().source,
+            feed.fetch(&client, &area(), wall(), t0).unwrap().source,
             SourceId::AdsbFi
         );
     }
@@ -446,6 +537,58 @@ mod tests {
             let late = backoff(40, &mut rng);
             assert!(late >= mins(5) && late <= mins(10));
         }
+    }
+
+    #[test]
+    fn a_used_up_daily_limit_moves_to_the_fallback_until_midnight_utc() {
+        let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
+        let limit = SourceId::AdsbLol.daily_request_limit().unwrap();
+        feed.set_usage(DailyUsage {
+            day: utc_day(wall()),
+            adsb_lol: limit - 1,
+            adsb_fi: 0,
+        });
+        feed.fetch(&client, &area(), wall(), t0).unwrap();
+        assert_eq!(
+            feed.fetch(&client, &area(), wall(), t0).unwrap().source,
+            SourceId::AdsbFi
+        );
+        assert_eq!(client.take_requested(), [LOL, FI]);
+        assert_eq!(feed.usage().adsb_lol, limit);
+        assert_eq!(feed.usage().adsb_fi, 1);
+
+        // A new UTC day starts the count again.
+        let tomorrow = wall() + Duration::from_secs(2 * 3600);
+        feed.fetch(&client, &area(), tomorrow, t0).unwrap();
+        assert_eq!(client.take_requested(), [LOL]);
+        assert_eq!(
+            feed.usage(),
+            DailyUsage {
+                day: utc_day(tomorrow),
+                adsb_lol: 1,
+                adsb_fi: 0
+            }
+        );
+    }
+
+    #[test]
+    fn a_used_up_limit_with_the_fallback_down_waits_for_midnight() {
+        let (client, mut feed, t0) = (FakeClient::default(), feed(), Instant::now());
+        client.answer(FI, 403, &[]);
+        let limit = SourceId::AdsbLol.daily_request_limit().unwrap();
+        feed.set_usage(DailyUsage {
+            day: utc_day(wall()),
+            adsb_lol: limit,
+            adsb_fi: 0,
+        });
+        assert!(feed.fetch(&client, &area(), wall(), t0).is_err());
+        // 22:16:54 UTC: 1 h 43 min 6 s to midnight.
+        assert_eq!(
+            feed.fetch(&client, &area(), wall(), t0),
+            Err(FetchError::Unavailable {
+                retry_after: Some(Duration::from_secs(6186))
+            })
+        );
     }
 
     #[test]

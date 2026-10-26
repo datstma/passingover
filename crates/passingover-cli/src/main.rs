@@ -5,12 +5,11 @@ use std::process::ExitCode;
 use std::time::{Instant, SystemTime};
 
 use clap::{Parser, Subcommand, ValueEnum};
+use passingover_core::Sky;
 use passingover_core::data::StandingData;
-use passingover_core::flight::flights_overhead;
-use passingover_core::geo::{Coordinate, QueryPoint, Radius};
+use passingover_core::geo::{Coordinate, Radius};
 use passingover_core::http::{UreqClient, user_agent};
-use passingover_core::position::{Area, PositionFeed, SourceId, choose_primary};
-use passingover_core::route::{RouteLookup, RouteSourceId};
+use passingover_core::position::{SourceId, choose_primary};
 use passingover_core::story::dreamy_line;
 
 /// Largest radius the CLI accepts (25 nm, D15).
@@ -99,40 +98,29 @@ fn now(args: &NowArgs) -> Result<(), String> {
         Some(km) => Radius::from_kilometres(km).map_err(|e| e.to_string())?,
         None => Radius::DEFAULT,
     };
-    let area = Area {
-        center: QueryPoint::from(here),
-        radius,
-    };
     let primary = args
         .source
         .map_or_else(|| choose_primary(fastrand::f64()), SourceId::from);
-    let data = load_data(args.data.as_ref());
+    let mut sky = Sky::new(primary, fastrand::u64(..));
+    if let Some(data) = load_data(args.data.as_ref()) {
+        sky.set_data(data);
+    }
     let client = UreqClient::new(&user_agent("PassingOver-CLI"));
-
-    let mut feed = PositionFeed::new(primary, fastrand::u64(..));
-    let snapshot = feed
-        .fetch(&client, &area, Instant::now())
+    let overhead = sky
+        .poll(&client, here, radius, SystemTime::now(), Instant::now())
         .map_err(|e| format!("Couldn't reach the aircraft data: {e}"))?;
 
-    let mut routes = RouteLookup::new();
-    let flights = flights_overhead(&snapshot, here, radius, |aircraft| {
-        let callsign = aircraft.callsign.as_deref()?;
-        routes.lookup(callsign, data.as_ref(), Some(&client), Instant::now())
-    });
-
     let wall_clock = SystemTime::now();
-    if flights.is_empty() {
+    if overhead.flights.is_empty() {
         println!("The sky above you is quiet right now.");
     }
-    for flight in &flights {
+    for flight in &overhead.flights {
         println!("{}", dreamy_line(flight, wall_clock));
     }
 
-    let attribution = snapshot.source.attribution();
+    let attribution = overhead.source.attribution();
     let mut credits = format!("{}, {}", attribution.text, attribution.url);
-    let mut route_sources: Vec<RouteSourceId> =
-        flights.iter().filter_map(|f| f.route_source).collect();
-    route_sources.dedup();
+    let route_sources = overhead.route_sources();
     if !route_sources.is_empty() {
         let names: Vec<&str> = route_sources.iter().map(|s| s.name()).collect();
         credits.push_str(&format!(". Routes: {}", names.join(", ")));
