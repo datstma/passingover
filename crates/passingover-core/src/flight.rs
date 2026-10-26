@@ -7,6 +7,7 @@ use crate::airport::Airport;
 use crate::geo::{Coordinate, Radius};
 use crate::position::Snapshot;
 use crate::route::{Leg, RouteInfo, RouteSourceId, current_leg};
+use crate::weather::{Weather, WeatherSourceId};
 
 const KNOT_MPS: f64 = 1852.0 / 3600.0;
 /// Typical airliner cruise speed, used when the aircraft isn't cruising yet.
@@ -20,6 +21,15 @@ const MIN_ARRIVAL_SPEED_MPS: f64 = 120.0 * KNOT_MPS;
 /// Added for descent and approach from cruise, and for the final landing.
 const APPROACH_ALLOWANCE: Duration = Duration::from_secs(15 * 60);
 const LANDING_ALLOWANCE: Duration = Duration::from_secs(5 * 60);
+/// Closer than this to the origin, the aircraft has just left (D35).
+const JUST_LEFT_WITHIN_M: f64 = 30_000.0;
+/// Average speed since take-off, climb included, and time added for the
+/// slow first minutes (D35).
+const AVERAGE_SINCE_TAKEOFF_MPS: f64 = 420.0 * KNOT_MPS;
+const CLIMB_ALLOWANCE: Duration = Duration::from_secs(10 * 60);
+/// A destination this close to the user is "nearby": no need for its time
+/// and weather.
+const NEARBY_M: f64 = 60_000.0;
 
 /// An aircraft overhead and what we know about its journey.
 #[derive(Debug, Clone, PartialEq)]
@@ -35,6 +45,16 @@ pub struct Flight {
     pub route_source: Option<RouteSourceId>,
     /// Estimated time to landing (D12), rounded to five minutes.
     pub time_to_landing: Option<Duration>,
+    /// The destination is within 60 km of the user.
+    pub lands_nearby: bool,
+    /// Estimated time since take-off (D35); zero if it has just left.
+    pub departed_ago: Option<Duration>,
+    /// Countries and seas still ahead, in order ("the Norwegian Sea",
+    /// "Greenland"); filled in by [`crate::Sky`] when it has region data.
+    pub ahead: Vec<String>,
+    /// Current weather at the destination, filled in by [`crate::Sky`].
+    pub weather: Option<Weather>,
+    pub weather_source: Option<WeatherSourceId>,
 }
 
 /// The flying aircraft in `snapshot` within `radius` of `user`, nearest
@@ -70,6 +90,15 @@ pub fn flights_overhead(
                 time_to_landing: leg
                     .as_ref()
                     .map(|l| time_to_landing(aircraft, &l.destination)),
+                departed_ago: leg
+                    .as_ref()
+                    .map(|l| time_since_departure(aircraft, &l.origin)),
+                lands_nearby: leg
+                    .as_ref()
+                    .is_some_and(|l| user.distance_to(&l.destination.position) <= NEARBY_M),
+                ahead: Vec::new(),
+                weather: None,
+                weather_source: None,
                 leg,
                 aircraft: aircraft.clone(),
             }
@@ -99,6 +128,18 @@ pub fn time_to_landing(aircraft: &Aircraft, destination: &Airport) -> Duration {
         (remaining / speed, APPROACH_ALLOWANCE)
     };
     round_to_five_minutes(Duration::from_secs_f64(seconds) + allowance)
+}
+
+/// Estimated time since the aircraft left `origin` (D35): distance flown at
+/// an average speed since take-off plus time for the climb, rounded to five
+/// minutes; zero within 30 km of the origin.
+pub fn time_since_departure(aircraft: &Aircraft, origin: &Airport) -> Duration {
+    let flown = origin.position.distance_to(&aircraft.position);
+    if flown < JUST_LEFT_WITHIN_M {
+        return Duration::ZERO;
+    }
+    let seconds = flown / AVERAGE_SINCE_TAKEOFF_MPS;
+    round_to_five_minutes(Duration::from_secs_f64(seconds) + CLIMB_ALLOWANCE)
 }
 
 /// Round to the nearest five minutes, at least five.
@@ -176,6 +217,16 @@ mod tests {
         let dest = airport(0.0, 0.0);
         let ac = aircraft(0.2698, 0.0, 900.0, 180.0);
         assert_eq!(minutes(time_to_landing(&ac, &dest)), 10);
+    }
+
+    #[test]
+    fn departure_is_estimated_from_the_distance_flown() {
+        let origin = airport(0.0, 0.0);
+        // 1000 km at 420 kt (778 km/h): 77 min + 10 min = 87, rounded to 85.
+        let ac = aircraft(8.993, 0.0, 10_668.0, 480.0);
+        assert_eq!(minutes(time_since_departure(&ac, &origin)), 85);
+        let just_left = aircraft(0.1, 0.0, 1_500.0, 200.0);
+        assert_eq!(time_since_departure(&just_left, &origin), Duration::ZERO);
     }
 
     #[test]

@@ -9,7 +9,9 @@ use crate::flight::{Flight, flights_overhead};
 use crate::geo::{Coordinate, QueryPoint, Radius};
 use crate::http::HttpClient;
 use crate::position::{Area, DailyUsage, FetchError, PositionFeed, Snapshot, SourceId};
+use crate::regions::Regions;
 use crate::route::{RouteLookup, RouteSourceId};
+use crate::weather::{WeatherLookup, WeatherSourceId};
 
 /// What one poll saw.
 #[derive(Debug, Clone, PartialEq)]
@@ -32,6 +34,17 @@ impl Overhead {
         }
         sources
     }
+
+    /// Weather sources used, in order of first use, for attribution.
+    pub fn weather_sources(&self) -> Vec<WeatherSourceId> {
+        let mut sources = Vec::new();
+        for s in self.flights.iter().filter_map(|f| f.weather_source) {
+            if !sources.contains(&s) {
+                sources.push(s);
+            }
+        }
+        sources
+    }
 }
 
 /// Position feed, route lookup and standing data for one front end.
@@ -40,6 +53,8 @@ pub struct Sky {
     feed: PositionFeed,
     routes: RouteLookup,
     data: Option<StandingData>,
+    regions: Option<Regions>,
+    weather: WeatherLookup,
 }
 
 impl Sky {
@@ -49,6 +64,8 @@ impl Sky {
             feed: PositionFeed::new(primary, seed),
             routes: RouteLookup::new(),
             data: None,
+            regions: None,
+            weather: WeatherLookup::new(),
         }
     }
 
@@ -64,6 +81,11 @@ impl Sky {
 
     pub fn data(&self) -> Option<&StandingData> {
         self.data.as_ref()
+    }
+
+    /// Use country and sea shapes for "will cross …" (D33).
+    pub fn set_regions(&mut self, regions: Regions) {
+        self.regions = Some(regions);
     }
 
     pub fn usage(&self) -> DailyUsage {
@@ -92,7 +114,8 @@ impl Sky {
         Ok(self.describe(&snapshot, here, radius, Some(client), now))
     }
 
-    /// Turn a snapshot into flights; `client` enables online route lookups.
+    /// Turn a snapshot into flights; `client` enables online route and
+    /// weather lookups, otherwise only cached weather is used.
     pub fn describe(
         &mut self,
         snapshot: &Snapshot,
@@ -102,9 +125,36 @@ impl Sky {
         now: Instant,
     ) -> Overhead {
         let (routes, data) = (&mut self.routes, self.data.as_ref());
-        let flights = flights_overhead(snapshot, here, radius, |aircraft| {
+        let mut flights = flights_overhead(snapshot, here, radius, |aircraft| {
             routes.lookup(aircraft.callsign.as_deref()?, data, client, now)
         });
+        if let Some(regions) = &self.regions {
+            for f in &mut flights {
+                if let Some(leg) = &f.leg {
+                    f.ahead = regions.ahead(f.aircraft.position, leg.destination.position);
+                }
+            }
+        }
+        let destinations: Vec<(String, Coordinate)> = flights
+            .iter()
+            .filter_map(|f| {
+                let d = &f.leg.as_ref()?.destination;
+                Some((d.code.clone(), d.position))
+            })
+            .collect();
+        if !destinations.is_empty() {
+            let weather = self.weather.get(&destinations, client, now);
+            for f in &mut flights {
+                let found = f
+                    .leg
+                    .as_ref()
+                    .and_then(|l| weather.get(&l.destination.code));
+                if let Some((w, source)) = found {
+                    f.weather = Some(*w);
+                    f.weather_source = Some(*source);
+                }
+            }
+        }
         Overhead {
             source: snapshot.source,
             time: snapshot.time,

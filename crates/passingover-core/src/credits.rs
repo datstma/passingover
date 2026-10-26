@@ -3,6 +3,7 @@
 
 use crate::position::SourceId;
 use crate::route::RouteSourceId;
+use crate::weather::WeatherSourceId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Credit {
@@ -30,6 +31,18 @@ pub fn for_route_source(id: RouteSourceId) -> Credit {
     Credit::new(&format!("Routes: {}", id.name()), id.url())
 }
 
+/// The credit for a weather source, with the wording its licence asks for.
+pub fn for_weather_source(id: WeatherSourceId) -> Credit {
+    match id {
+        WeatherSourceId::OpenMeteo => {
+            Credit::new("Weather data by Open-Meteo.com", "https://open-meteo.com/")
+        }
+        WeatherSourceId::MetNorway => {
+            Credit::new("Weather: data from MET Norway", "https://api.met.no/")
+        }
+    }
+}
+
 /// Every source, in the order "About the data" lists them.
 pub fn all() -> Vec<Credit> {
     vec![
@@ -50,6 +63,12 @@ pub fn all() -> Vec<Credit> {
         Credit::new(
             "Airport time zones: timezone-boundary-builder, © OpenStreetMap contributors (ODbL)",
             "https://github.com/evansiroky/timezone-boundary-builder",
+        ),
+        for_weather_source(WeatherSourceId::OpenMeteo),
+        for_weather_source(WeatherSourceId::MetNorway),
+        Credit::new(
+            "Countries and seas: made with Natural Earth",
+            "https://www.naturalearthdata.com/",
         ),
     ]
 }

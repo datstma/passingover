@@ -70,6 +70,28 @@ impl Coordinate {
     }
 }
 
+impl Coordinate {
+    /// The point `fraction` (0–1) of the way along the great circle to
+    /// `other`.
+    pub fn toward(&self, other: &Coordinate, fraction: f64) -> Coordinate {
+        let d = self.distance_to(other) / EARTH_RADIUS_M;
+        if d < 1e-12 {
+            return *self;
+        }
+        let (lat1, lon1) = (self.lat.to_radians(), self.lon.to_radians());
+        let (lat2, lon2) = (other.lat.to_radians(), other.lon.to_radians());
+        let a = ((1.0 - fraction) * d).sin() / d.sin();
+        let b = (fraction * d).sin() / d.sin();
+        let x = a * lat1.cos() * lon1.cos() + b * lat2.cos() * lon2.cos();
+        let y = a * lat1.cos() * lon1.sin() + b * lat2.cos() * lon2.sin();
+        let z = a * lat1.sin() + b * lat2.sin();
+        Coordinate {
+            lat: z.atan2(x.hypot(y)).to_degrees(),
+            lon: y.atan2(x).to_degrees(),
+        }
+    }
+}
+
 /// Smallest difference between two bearings in degrees (0–180).
 pub fn angle_between(a: f64, b: f64) -> f64 {
     let d = (a - b).rem_euclid(360.0);
@@ -248,6 +270,17 @@ mod tests {
         // Stockholm to Chicago starts out west-north-west (great circle).
         let b = coord(59.6519, 17.9186).bearing_to(&coord(41.9786, -87.9048));
         assert!((300.0..320.0).contains(&b), "{b}");
+    }
+
+    #[test]
+    fn toward_follows_the_great_circle() {
+        let (a, b) = (coord(0.0, 0.0), coord(0.0, 90.0));
+        let mid = a.toward(&b, 0.5);
+        assert!((mid.lat() - 0.0).abs() < 1e-9 && (mid.lon() - 45.0).abs() < 1e-9);
+        assert_eq!(a.toward(&b, 0.0), a);
+        // Stockholm to Chicago passes far north, over Greenland's latitude.
+        let mid = coord(59.6519, 17.9186).toward(&coord(41.9786, -87.9048), 0.5);
+        assert!(mid.lat() > 60.0, "{mid:?}");
     }
 
     #[test]

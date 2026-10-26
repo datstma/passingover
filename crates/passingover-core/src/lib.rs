@@ -13,9 +13,11 @@ pub mod geo;
 pub mod http;
 pub mod polite;
 pub mod position;
+pub mod regions;
 pub mod route;
 pub mod sky;
 pub mod story;
+pub mod weather;
 
 pub use aircraft::Aircraft;
 pub use airport::{Airline, Airport};

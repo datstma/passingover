@@ -21,10 +21,19 @@ use std::time::{SystemTime, UNIX_EPOCH};
 const VRS_REPO: &str = "https://github.com/vradarserver/standing-data.git";
 const VRS_BRANCH: &str = "main";
 
+/// Natural Earth (public domain), pinned to a release (D33).
+const NATURAL_EARTH: &str =
+    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson";
+const NE_COUNTRIES: &str = "ne_110m_admin_0_countries.geojson";
+const NE_SEAS: &str = "ne_50m_geography_marine_polys.geojson";
+/// Sea outlines are simplified to this tolerance in degrees (about 2 km).
+const SEA_TOLERANCE_DEG: f64 = 0.02;
+
 // Must match passingover_core::data.
 const ROUTES_HEADER: &str = "#passingover-routes\t1";
 const AIRPORTS_HEADER: &str = "#passingover-airports\t1";
 const AIRLINES_HEADER: &str = "#passingover-airlines\t1";
+const REGIONS_HEADER: &str = "#passingover-regions\t1";
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -74,10 +83,15 @@ fn data(args: &[String]) -> Result<()> {
         airlines.len()
     );
 
+    let ne = root.join("target/xtask/natural-earth-v5.1.2");
+    let regions = read_regions(&download(&ne, NE_COUNTRIES)?, &download(&ne, NE_SEAS)?)?;
+    println!("{} region polygons", regions.len());
+
     fs::create_dir_all(&out).map_err(|e| format!("{}: {e}", out.display()))?;
     write_table(&out.join("routes.tsv"), ROUTES_HEADER, &routes)?;
     write_table(&out.join("airports.tsv"), AIRPORTS_HEADER, &airports)?;
     write_table(&out.join("airlines.tsv"), AIRLINES_HEADER, &airlines)?;
+    write_table(&out.join("regions.tsv"), REGIONS_HEADER, &regions)?;
     let manifest = manifest(&commit, &commit_date, &routes, &airports, &airlines);
     write(&out.join("manifest.json"), &manifest)?;
     write(&out.join("NOTICE.md"), NOTICE)?;
@@ -85,7 +99,7 @@ fn data(args: &[String]) -> Result<()> {
 
     let assets = root.join("app/assets/data");
     fs::create_dir_all(&assets).map_err(|e| format!("{}: {e}", assets.display()))?;
-    for name in ["routes.tsv", "airports.tsv", "airlines.tsv"] {
+    for name in ["routes.tsv", "airports.tsv", "airlines.tsv", "regions.tsv"] {
         let text = fs::read(out.join(name)).map_err(|e| format!("{name}: {e}"))?;
         write_gzip(&assets.join(format!("{name}.gz")), &text)?;
     }
@@ -284,6 +298,11 @@ fn manifest(
                 "from": "timezone-boundary-builder, © OpenStreetMap contributors",
                 "license": "ODbL-1.0",
             },
+            "regions": {
+                "url": NATURAL_EARTH,
+                "files": [NE_COUNTRIES, NE_SEAS],
+                "license": "public domain (Natural Earth)",
+            },
         },
         "counts": {
             "routes": routes.len(),
@@ -304,12 +323,197 @@ Built by `cargo xtask data`; see manifest.json for versions.
 - Routes, airports and airlines: Virtual Radar Server standing data
   (https://github.com/vradarserver/standing-data), CC0 1.0. Route data
   contributors are credited in that repository.
+- Countries and seas (`regions.tsv`): Natural Earth
+  (https://www.naturalearthdata.com/), public domain. Made with Natural
+  Earth.
 - Airport time zones were computed from timezone-boundary-builder data
   (https://github.com/evansiroky/timezone-boundary-builder),
   © OpenStreetMap contributors, via tzf-rs.
 
 Because the time zone column is derived from ODbL data, `airports.tsv` is
 made available under the Open Database License 1.0
-(https://opendatacommons.org/licenses/odbl/1-0/). The other files are CC0.
+(https://opendatacommons.org/licenses/odbl/1-0/). `regions.tsv` is public
+domain; the other files are CC0.
 These files are not covered by Passing Over's MIT/Apache-2.0 code license.
 ";
+
+/// Download a Natural Earth file once into `dir` (it's pinned to a release).
+fn download(dir: &Path, name: &str) -> Result<PathBuf> {
+    let path = dir.join(name);
+    if path.exists() {
+        return Ok(path);
+    }
+    fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    let status = Command::new("curl")
+        .args(["-sSfL", "-o"])
+        .arg(&path)
+        .arg(format!("{NATURAL_EARTH}/{name}"))
+        .status()
+        .map_err(|e| format!("running curl: {e}"))?;
+    if !status.success() {
+        let _ = fs::remove_file(&path);
+        return Err(format!("downloading {name} failed"));
+    }
+    Ok(path)
+}
+
+/// One line per polygon: kind, display name, rings (see
+/// passingover_core::regions). Countries from the 1:110m admin-0 layer, seas
+/// from the 1:50m marine layer, simplified.
+fn read_regions(countries: &Path, seas: &Path) -> Result<Vec<Vec<String>>> {
+    let mut rows = Vec::new();
+    for (path, kind) in [(countries, "c"), (seas, "w")] {
+        let text = fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
+        let json: serde_json::Value =
+            serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))?;
+        let features = json["features"].as_array().ok_or("no features")?;
+        for feature in features {
+            let props = &feature["properties"];
+            let name = if kind == "c" {
+                props["NAME_EN"].as_str().map(country_name)
+            } else {
+                props["name_en"]
+                    .as_str()
+                    .or(props["name"].as_str())
+                    .map(sea_name)
+            };
+            let Some(name) = name.filter(|n| !n.is_empty()) else {
+                continue;
+            };
+            let geometry = &feature["geometry"];
+            let polygons = match geometry["type"].as_str() {
+                Some("Polygon") => vec![&geometry["coordinates"]],
+                Some("MultiPolygon") => geometry["coordinates"]
+                    .as_array()
+                    .map(|p| p.iter().collect())
+                    .unwrap_or_default(),
+                _ => continue,
+            };
+            let tolerance = if kind == "w" { SEA_TOLERANCE_DEG } else { 0.0 };
+            for polygon in polygons {
+                let rings: Vec<String> = polygon
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .filter_map(|ring| ring_text(ring, tolerance))
+                    .collect();
+                if !rings.is_empty() {
+                    rows.push(vec![kind.to_owned(), name.clone(), rings.join(";")]);
+                }
+            }
+        }
+    }
+    Ok(rows)
+}
+
+/// A country's name as it reads in a sentence.
+fn country_name(name: &str) -> String {
+    let short = match name {
+        "United States of America" => "the United States",
+        "People's Republic of China" => "China",
+        "Turkish Republic of Northern Cyprus" => "Northern Cyprus",
+        "Czech Republic" => "Czechia",
+        "The Bahamas" => "the Bahamas",
+        "The Gambia" => "the Gambia",
+        _ => name,
+    };
+    let needs_the = [
+        "Central African Republic",
+        "Democratic Republic of the Congo",
+        "Dominican Republic",
+        "Falkland Islands",
+        "French Southern and Antarctic Lands",
+        "Netherlands",
+        "Philippines",
+        "Republic of the Congo",
+        "Solomon Islands",
+        "United Arab Emirates",
+        "United Kingdom",
+    ];
+    if needs_the.contains(&short) {
+        format!("the {short}")
+    } else {
+        short.to_owned()
+    }
+}
+
+/// A sea's name as it reads in a sentence: "the North Sea".
+fn sea_name(name: &str) -> String {
+    let name = name.trim();
+    let titled = if name.chars().any(char::is_lowercase) {
+        name.to_owned()
+    } else {
+        // Natural Earth writes some oceans in capitals: "INDIAN OCEAN".
+        name.split(' ')
+            .map(|w| {
+                let lower = w.to_lowercase();
+                let mut c = lower.chars();
+                c.next()
+                    .map(|f| f.to_uppercase().chain(c).collect())
+                    .unwrap_or_default()
+            })
+            .collect::<Vec<String>>()
+            .join(" ")
+    };
+    if titled.starts_with("Lake ") {
+        titled
+    } else {
+        format!("the {titled}")
+    }
+}
+
+/// A GeoJSON ring as `lon,lat lon,lat …` with two decimals, simplified.
+fn ring_text(ring: &serde_json::Value, tolerance: f64) -> Option<String> {
+    let points: Vec<(f64, f64)> = ring
+        .as_array()?
+        .iter()
+        .filter_map(|p| Some((p[0].as_f64()?, p[1].as_f64()?)))
+        .collect();
+    let mut kept = simplify(&points, tolerance);
+    kept.dedup_by(|a, b| format!("{:.2},{:.2}", a.0, a.1) == format!("{:.2},{:.2}", b.0, b.1));
+    (kept.len() >= 4).then(|| {
+        kept.iter()
+            .map(|(lon, lat)| format!("{lon:.2},{lat:.2}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    })
+}
+
+/// Douglas–Peucker simplification in degrees.
+fn simplify(points: &[(f64, f64)], tolerance: f64) -> Vec<(f64, f64)> {
+    if tolerance <= 0.0 || points.len() < 5 {
+        return points.to_vec();
+    }
+    let last = points.len() - 1;
+    let mut keep = vec![false; points.len()];
+    keep[0] = true;
+    keep[last] = true;
+    let mut stack = vec![(0, last)];
+    while let Some((a, b)) = stack.pop() {
+        let (ax, ay) = points[a];
+        let (bx, by) = points[b];
+        let (dx, dy) = (bx - ax, by - ay);
+        let len = dx.hypot(dy);
+        let mut farthest = (0.0, a);
+        for (i, &(px, py)) in points.iter().enumerate().take(b).skip(a + 1) {
+            let d = if len == 0.0 {
+                (px - ax).hypot(py - ay)
+            } else {
+                ((px - ax) * dy - (py - ay) * dx).abs() / len
+            };
+            if d > farthest.0 {
+                farthest = (d, i);
+            }
+        }
+        if farthest.0 > tolerance {
+            keep[farthest.1] = true;
+            stack.push((a, farthest.1));
+            stack.push((farthest.1, b));
+        }
+    }
+    points
+        .iter()
+        .zip(keep)
+        .filter_map(|(p, k)| k.then_some(*p))
+        .collect()
+}

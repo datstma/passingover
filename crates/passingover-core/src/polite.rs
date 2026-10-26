@@ -44,3 +44,16 @@ pub const ROUTE_MISS_CACHE_TTL: Duration = Duration::from_secs(6 * 60 * 60);
 pub const ROUTE_LOOKUPS_PER_MINUTE: usize = 10;
 /// Pause online route lookups this long after an error or 429.
 pub const ROUTE_SOURCE_PAUSE: Duration = Duration::from_secs(5 * 60);
+
+/// How long Open-Meteo weather for a destination is reused (its `current`
+/// values change every 15 minutes).
+pub const OPEN_METEO_TTL: Duration = Duration::from_secs(15 * 60);
+/// How long MET Norway weather is reused; its responses expire after
+/// about 30 minutes and must not be fetched again before that.
+pub const MET_NORWAY_TTL: Duration = Duration::from_secs(30 * 60);
+/// Destinations per Open-Meteo request.
+pub const OPEN_METEO_BATCH: usize = 20;
+/// MET Norway requests per poll at most (it has no batching).
+pub const MET_NORWAY_PER_POLL: usize = 3;
+/// Pause a weather source this long after an error.
+pub const WEATHER_SOURCE_PAUSE: Duration = Duration::from_secs(5 * 60);

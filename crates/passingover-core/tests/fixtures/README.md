@@ -49,3 +49,17 @@ their airports and airlines. Routes and airlines are CC0 (VRS standing data);
 `airports.tsv` includes time zones derived from timezone-boundary-builder
 (© OpenStreetMap contributors) and is under the
 [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+
+## weather/
+
+Recorded on 2026-10-26 with the project User-Agent.
+
+| File | Request |
+|---|---|
+| `open_meteo_current_kord_essa.json` | `GET https://api.open-meteo.com/v1/forecast?latitude=41.98,59.65&longitude=-87.9,17.92&current=temperature_2m,weather_code,is_day&timezone=GMT` |
+| `met_norway_compact_kord.json` | `GET https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=41.98&lon=-87.9`, trimmed to the first two time steps |
+
+- Open-Meteo: weather data by Open-Meteo.com (https://open-meteo.com/),
+  CC BY 4.0.
+- MET Norway: data from MET Norway (https://api.met.no/), NLOD 2.0 and
+  CC BY 4.0.

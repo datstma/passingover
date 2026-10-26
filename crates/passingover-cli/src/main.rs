@@ -6,11 +6,13 @@ use std::time::{Instant, SystemTime};
 
 use clap::{Parser, Subcommand, ValueEnum};
 use passingover_core::Sky;
+use passingover_core::credits;
 use passingover_core::data::StandingData;
 use passingover_core::geo::{Coordinate, Radius};
 use passingover_core::http::{UreqClient, user_agent};
 use passingover_core::position::{SourceId, choose_primary};
-use passingover_core::story::dreamy_line;
+use passingover_core::regions::{REGIONS_FILE, Regions};
+use passingover_core::story::{Units, dreamy_line, journey};
 
 /// Largest radius the CLI accepts (25 nm, D15).
 const MAX_RADIUS_KM: f64 = 46.3;
@@ -52,6 +54,9 @@ struct NowArgs {
     /// Directory built by `cargo xtask data` (or set PASSINGOVER_DATA).
     #[arg(long, env = "PASSINGOVER_DATA")]
     data: Option<PathBuf>,
+    /// Show temperatures in °F instead of °C.
+    #[arg(long)]
+    imperial: bool,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -102,9 +107,23 @@ fn now(args: &NowArgs) -> Result<(), String> {
         .source
         .map_or_else(|| choose_primary(fastrand::f64()), SourceId::from);
     let mut sky = Sky::new(primary, fastrand::u64(..));
-    if let Some(data) = load_data(args.data.as_ref()) {
-        sky.set_data(data);
+    if let Some(dir) = data_dir(args.data.as_ref()) {
+        match StandingData::load(&dir) {
+            Ok(data) => sky.set_data(data),
+            Err(e) => eprintln!("Couldn't load route data ({e}); looking routes up online."),
+        }
+        if dir.join(REGIONS_FILE).exists() {
+            match Regions::load(&dir) {
+                Ok(regions) => sky.set_regions(regions),
+                Err(e) => eprintln!("Couldn't load countries and seas ({e})."),
+            }
+        }
     }
+    let units = if args.imperial {
+        Units::Imperial
+    } else {
+        Units::Metric
+    };
     let client = UreqClient::new(&user_agent("PassingOver-CLI"));
     let overhead = sky
         .poll(&client, here, radius, SystemTime::now(), Instant::now())
@@ -115,7 +134,10 @@ fn now(args: &NowArgs) -> Result<(), String> {
         println!("The sky above you is quiet right now.");
     }
     for flight in &overhead.flights {
-        println!("{}", dreamy_line(flight, wall_clock));
+        println!("{}", dreamy_line(flight, wall_clock, units));
+        if let Some(story) = journey(flight) {
+            println!("    {story}");
+        }
     }
 
     let attribution = overhead.source.attribution();
@@ -125,28 +147,25 @@ fn now(args: &NowArgs) -> Result<(), String> {
         let names: Vec<&str> = route_sources.iter().map(|s| s.name()).collect();
         credits.push_str(&format!(". Routes: {}", names.join(", ")));
     }
+    for source in overhead.weather_sources() {
+        let c = credits::for_weather_source(source);
+        credits.push_str(&format!(". {}, {}", c.text, c.url));
+    }
     println!("\n{credits}.");
     Ok(())
 }
 
-/// Load the standing data from `--data`, `PASSINGOVER_DATA`, or the
-/// workspace's `data/` directory in development builds.
-fn load_data(dir: Option<&PathBuf>) -> Option<StandingData> {
+/// The data directory: `--data`, `PASSINGOVER_DATA`, or the workspace's
+/// `data/` in development builds.
+fn data_dir(dir: Option<&PathBuf>) -> Option<PathBuf> {
     let dev_dir = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../../data"));
     let dir = dir.cloned().or_else(|| dev_dir.is_dir().then_some(dev_dir));
-    let Some(dir) = dir else {
+    if dir.is_none() {
         eprintln!(
             "No route data found (build it with `cargo xtask data`); looking routes up online."
         );
-        return None;
-    };
-    match StandingData::load(&dir) {
-        Ok(data) => Some(data),
-        Err(e) => {
-            eprintln!("Couldn't load route data ({e}); looking routes up online.");
-            None
-        }
     }
+    dir
 }
 
 #[cfg(test)]

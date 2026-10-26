@@ -9,7 +9,7 @@ use passingover_core::flight::flights_overhead;
 use passingover_core::geo::{Coordinate, Radius};
 use passingover_core::position::{AdsbLol, PositionSource};
 use passingover_core::route::{RouteLookup, RouteSourceId};
-use passingover_core::story::dreamy_line;
+use passingover_core::story::{Units, dreamy_line};
 
 fn fixtures() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -47,10 +47,11 @@ fn flights_over_copenhagen_airport() {
     let sk2802 = &flights[1];
     assert_eq!(sk2802.leg.as_ref().unwrap().origin.place(), "Lisbon");
 
-    // 2026-10-25 22:16 UTC is 23:16 in Copenhagen (CET since that morning).
-    let line = dreamy_line(sk2802, snapshot.time);
+    // Copenhagen is where the user is, so no local time or weather.
+    assert!(sk2802.lands_nearby);
+    let line = dreamy_line(sk2802, snapshot.time, Units::Metric);
     assert!(
-        line.starts_with("SK 2802 → Copenhagen. It's 23:16 there. Landing in about "),
+        line.starts_with("SK 2802 → Copenhagen, landing nearby in about "),
         "{line}"
     );
 }
