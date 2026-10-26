@@ -138,8 +138,7 @@ macOS menu bar / tray icon; iOS and Android home-screen widgets (native Swift
 or Kotlin where required).
 
 - [x] macOS menu bar item (D39)
-- [ ] Android home-screen widget — waiting on a decision about background
-      refresh
+- [x] Android home-screen widget showing what the app saw last (D40)
 - [ ] iOS home-screen widget — needs a WidgetKit extension target created
       in Xcode, and an App Group
 

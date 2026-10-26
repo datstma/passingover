@@ -544,3 +544,36 @@ libraries).
 
 **Why:** a glance at the menu bar is the calmest possible view; doing it
 natively keeps the dependency list short.
+
+### D40 — Home-screen widget shows what the app saw last
+*2026-10-26 · Accepted (owner) · Android first*
+
+The Android widget (`PassingOverWidget`, a `home_widget` provider with a
+night-sky RemoteViews layout) shows the nearest flight the app saw last:
+"SK 945", "→ Chicago", "15:12 there, 9°C and overcast · landing in about
+7 h 40 min", "As of 21:30". The app hands it new content after polls, only
+when something changed; tapping the widget opens the app. There is no
+background refresh: no requests to the sources while the app is closed, and
+no battery cost (`updatePeriodMillis` is 0). The iOS widget comes later; it
+needs a WidgetKit extension target and an App Group, and `home_widget`
+already covers the iOS side of the data hand-off.
+
+**Why:** the owner chose "last seen by the app" over background polling:
+it keeps the community sources' load where it is and the widget simple.
+
+### D41 — Android location without Google Play services
+*2026-10-26 · Accepted · Refines D31*
+
+On Android the app asks for its approximate location through the
+platform's `LocationManager` (geolocator `forceLocationManager: true`), not
+Google Play services' fused provider. The fused path showed Google's
+"Location Accuracy" dialog, which asks the user to share Wi-Fi scans with
+Google; an app that only needs a rough position shouldn't ask for that. With
+coarse permission only, Android serves network-based locations, which most
+phones provide; where none is available (e.g. Google's location accuracy
+turned off), the app says it couldn't find the location and offers manual
+coordinates. Not depending on Play services also keeps the door open for
+F-Droid (geolocator's docs show how to exclude `com.google.android.gms`).
+
+**Why:** the privacy promise is "roughly where you are, nothing more",
+including towards Google.
