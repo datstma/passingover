@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'rust/api/sky.dart';
+import 'menu_bar.dart';
 import 'settings.dart';
 import 'sky_controller.dart';
 
@@ -140,6 +141,20 @@ class _LocationSheetState extends State<_LocationSheet> {
               child: const Text('Use these coordinates'),
             ),
           ),
+          if (MacMenuBar.supported)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Show in the menu bar'),
+              subtitle: const Text(
+                'Keeps an eye on the sky (every minute) while the window is '
+                'closed.',
+              ),
+              value: widget.controller.showInMenuBar,
+              onChanged: (on) async {
+                await widget.controller.setShowInMenuBar(on);
+                if (mounted) setState(() {});
+              },
+            ),
           const SizedBox(height: 16),
           Text('Temperatures', style: text.titleSmall),
           const SizedBox(height: 8),

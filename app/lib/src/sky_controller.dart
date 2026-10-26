@@ -78,6 +78,11 @@ class SkyController extends ChangeNotifier {
   Timer? _timer;
   bool _paused = false;
   bool _ambient = false;
+
+  /// Hidden, but something (the menu bar item) still shows flights: keep
+  /// polling at the ambient pace instead of stopping (D39).
+  bool _keepPollingWhenHidden = false;
+  bool _hiddenButShown = false;
   bool _polling = false;
   bool _pollAgain = false;
   DateTime? _locatedAt;
@@ -101,17 +106,37 @@ class SkyController extends ChangeNotifier {
     await _poll();
   }
 
-  /// Stop polling while the app is hidden.
+  /// Stop polling while the app is hidden, or slow down to the ambient
+  /// pace if the menu bar item still shows flights.
   void pause() {
-    _paused = true;
     _timer?.cancel();
+    if (_keepPollingWhenHidden) {
+      _hiddenButShown = true;
+      if (!_polling) _schedule(null);
+    } else {
+      _paused = true;
+    }
   }
 
   /// Poll again when the app is visible again.
   Future<void> resume() async {
+    if (_hiddenButShown) {
+      _hiddenButShown = false;
+      _pollSoon();
+      return;
+    }
     if (!_paused) return;
     _paused = false;
     await _tick();
+  }
+
+  void setKeepPollingWhenHidden(bool keep) => _keepPollingWhenHidden = keep;
+
+  bool get showInMenuBar => _settings.showInMenuBar;
+
+  Future<void> setShowInMenuBar(bool show) async {
+    await _settings.setShowInMenuBar(show);
+    notifyListeners();
   }
 
   Future<void> useDeviceLocation() async {
@@ -257,7 +282,8 @@ class SkyController extends ChangeNotifier {
   void _schedule(int? retryAfterSecs) {
     if (_paused) return;
     final t = _api.timing;
-    final base = _ambient ? t.ambientIntervalMs : t.intervalMs;
+    final slow = _ambient || _hiddenButShown;
+    final base = slow ? t.ambientIntervalMs : t.intervalMs;
     var ms = base + _random.nextInt(2 * t.jitterMs + 1) - t.jitterMs;
     if (retryAfterSecs != null) ms = max(ms, retryAfterSecs * 1000);
     ms = max(ms, t.minIntervalMs);

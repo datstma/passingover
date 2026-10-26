@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:passingover/main.dart';
@@ -95,6 +97,17 @@ void main() {
       reason: 'no route data loaded',
     );
     expect(view.credits.single.url, 'https://adsb.lol');
+  });
+
+  test('the macOS menu bar item answers', () async {
+    if (!Platform.isMacOS) return;
+    const channel = MethodChannel('passingover/menu_bar');
+    await channel.invokeMethod<void>('update', {
+      'title': 'Chicago',
+      'lines': ['SK 945 → Chicago.'],
+      'footer': 'Updated 03:01 · adsb.lol',
+    });
+    await channel.invokeMethod<void>('remove');
   });
 
   testWidgets('live: the Now screen fills from the real sources', (

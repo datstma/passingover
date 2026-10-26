@@ -87,6 +87,12 @@ class Settings {
   Future<void> setImperial(bool imperial) =>
       _prefs.setBool('units.imperial', imperial);
 
+  /// Show the nearest flight in the macOS menu bar (D39).
+  bool get showInMenuBar => _prefs.getBool('menuBar.show') ?? true;
+
+  Future<void> setShowInMenuBar(bool show) =>
+      _prefs.setBool('menuBar.show', show);
+
   /// Keep a daydream log on this device (D38). On unless turned off.
   bool get keepLog => _prefs.getBool('log.keep') ?? true;
 

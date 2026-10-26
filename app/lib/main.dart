@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'src/ambient/ambient_platform.dart';
 import 'src/location.dart';
+import 'src/menu_bar.dart';
 import 'src/now_screen.dart';
 import 'src/rust/api/sky.dart';
 import 'src/rust/frb_generated.dart';
@@ -40,14 +41,23 @@ Future<void> main() async {
     location: DeviceLocation(),
     random: random,
   );
-  runApp(PassingOverApp(controller: controller));
+  final navigatorKey = GlobalKey<NavigatorState>();
+  runApp(PassingOverApp(controller: controller, navigatorKey: navigatorKey));
+  if (MacMenuBar.supported) {
+    MacMenuBar(controller: controller, navigatorKey: navigatorKey).start();
+  }
   unawaited(controller.start());
 }
 
 class PassingOverApp extends StatefulWidget {
-  const PassingOverApp({super.key, required this.controller});
+  const PassingOverApp({
+    super.key,
+    required this.controller,
+    this.navigatorKey,
+  });
 
   final SkyController controller;
+  final GlobalKey<NavigatorState>? navigatorKey;
 
   @override
   State<PassingOverApp> createState() => _PassingOverAppState();
@@ -75,6 +85,7 @@ class _PassingOverAppState extends State<PassingOverApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: widget.navigatorKey,
       title: 'Passing Over',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
