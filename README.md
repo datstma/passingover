@@ -1,3 +1,5 @@
+<img src="app/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png" width="128" alt="">
+
 # Passing Over
 
 *Where the planes above you are going.*

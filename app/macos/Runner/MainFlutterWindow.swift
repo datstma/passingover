@@ -65,7 +65,11 @@ final class MenuBar: NSObject {
     let item = self.item ?? NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     self.item = item
     if let button = item.button {
-      button.image = NSImage(systemSymbolName: "airplane", accessibilityDescription: "Passing Over")
+      // A template image: macOS tints it to match the menu bar (D42).
+      let image = NSImage(named: "MenuBarIcon")
+      image?.isTemplate = true
+      image?.accessibilityDescription = "Passing Over"
+      button.image = image
       button.imagePosition = .imageLeading
       button.title = title.isEmpty ? "" : " \(title)"
     }
