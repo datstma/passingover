@@ -4,7 +4,7 @@ Status values: **Not started** · **In progress** · **Done**.
 
 | # | Milestone | Status |
 |---|---|---|
-| M0 | Foundation | In progress |
+| M0 | Foundation | Done |
 | M1 | Core + CLI | Done |
 | M2 | First app view | Not started |
 | M3 | Daydream enrichment | Not started |
@@ -37,14 +37,12 @@ Linux and Windows (local CI on the owner's machines, D18).
 - [x] flutter_rust_bridge wired up with the Native Assets backend (D7); bridge
       crate `passingover_bridge` in `app/rust`, in the root workspace (D27)
 - [x] "Hello from Rust core" shown in the app on macOS desktop; integration
-      test passes on macOS and Windows; macOS release build is universal
+      test passes on macOS, Linux and Windows; macOS release build is universal
 - [x] `scripts/ci.sh`: Flutter stage locally (pins, bindings, analyze, tests,
       integration test) and on Windows (analyze, tests, build, integration
       test) with a project-pinned SDK (D28)
-- [ ] **Waiting: Linux Flutter stage.** The Linux build host is 98 % full
-      (5.5 GB free on 2026-10-26); the SDK and build need about 4–5 GB, plus
-      clang, cmake and ninja-build. Run `scripts/ci.sh setup linux` once
-      there is room
+- [x] Linux Flutter stage: analyze, tests, build and the integration test
+      under xvfb pass; `scripts/ci.sh all` is green on macOS, Linux and Windows
 
 ## M1 — Core + CLI
 
