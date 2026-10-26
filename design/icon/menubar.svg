@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="80 280 660 660">
+  <!-- The macOS menu-bar item (D39, D42): a template image, so only the
+       alpha channel counts and macOS colours it to match the menu bar.
+       Rendered at 18×18 pt. -->
+  <defs>
+    <linearGradient id="bar-trail" gradientUnits="userSpaceOnUse" x1="130" y1="890" x2="560" y2="460">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <path d="M152.7 915.3L577 491" stroke="url(#bar-trail)" stroke-width="30" stroke-linecap="round"/>
+  <path d="M104.7 867.3L529 443" stroke="url(#bar-trail)" stroke-width="30" stroke-linecap="round"/>
+  <path transform="translate(652 368) rotate(-45) scale(1.4)" d="M-86 -7C-60 -13 50 -13 68 -11C80 -9 88 -4 90 0C88 4 80 9 68 11C50 13 -60 13 -86 7Z" fill="#000000"/>
+  <circle cx="701.5" cy="459.9" r="26" fill="#000000"/>
+  <circle cx="560.1" cy="318.5" r="26" fill="#000000"/>
+</svg>

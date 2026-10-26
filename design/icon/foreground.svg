@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Passing Over app icon, foreground layer: a jet seen from the ground
+       at dusk (D42). 1024 units span the whole icon. Everything that has to
+       stay visible is within 313 units of the centre, Android's adaptive-icon
+       safe zone; the contrails may run off the edge. -->
+  <defs>
+    <linearGradient id="fg-trail" gradientUnits="userSpaceOnUse" x1="150" y1="900" x2="580" y2="450">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    </linearGradient>
+    <radialGradient id="fg-glow">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Twin contrails, starting just behind the tail. -->
+  <path d="M107.5 954.9L595.4 467" stroke="url(#fg-trail)" stroke-width="18" stroke-linecap="round"/>
+  <path d="M65.1 912.5L553 424.6" stroke="url(#fg-trail)" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="652" cy="368" r="110" fill="url(#fg-glow)"/>
+  <!-- The fuselage, nose to the upper right. -->
+  <path transform="translate(652 368) rotate(-45)" d="M-86 -7C-60 -13 50 -13 68 -11C80 -9 88 -4 90 0C88 4 80 9 68 11C50 13 -60 13 -86 7Z" fill="#FFFFFF"/>
+  <!-- Wingtip lights as seen from below: port red, starboard green. -->
+  <circle cx="690.9" cy="442.3" r="18" fill="#FF4D4D"/>
+  <circle cx="577.7" cy="329.1" r="18" fill="#3DDC84"/>
+</svg>

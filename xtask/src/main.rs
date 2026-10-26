@@ -2,6 +2,7 @@
 //!
 //! ```text
 //! cargo xtask data [--out DIR]   build the route/airport/airline tables
+//! cargo xtask icons              render the app icons from design/icon/
 //! ```
 //!
 //! `data` shallow-clones (or updates) the VRS standing data into
@@ -9,6 +10,8 @@
 //! writes the tables described in `passingover_core::data` to `data/` (or
 //! `--out`), with a manifest and a NOTICE (D24). It also writes gzipped
 //! copies for the app to bundle to `app/assets/data/` (D29).
+//!
+//! `icons` renders the icon masters into each platform's icon files (D43).
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Write as _;
@@ -17,6 +20,8 @@ use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+mod icons;
 
 const VRS_REPO: &str = "https://github.com/vradarserver/standing-data.git";
 const VRS_BRANCH: &str = "main";
@@ -41,7 +46,8 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result = match args.first().map(String::as_str) {
         Some("data") => data(&args[1..]),
-        _ => Err("usage: cargo xtask data [--out DIR]".into()),
+        Some("icons") => icons::icons(&args[1..]),
+        _ => Err("usage: cargo xtask data [--out DIR] | cargo xtask icons".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,

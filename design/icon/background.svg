@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Passing Over app icon, background layer: a dusk sky (D42). -->
+  <defs>
+    <linearGradient id="bg-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16244A"/>
+      <stop offset="0.55" stop-color="#5A5C8C"/>
+      <stop offset="0.85" stop-color="#E39A7A"/>
+      <stop offset="1" stop-color="#F6C48C"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg-sky)"/>
+</svg>

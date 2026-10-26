@@ -10,6 +10,9 @@ publish = false
 [dependencies]
 csv = "1.4"
 flate2.workspace = true
+# SVG rendering for `cargo xtask icons` (D43); no text or raster images needed.
+resvg = { version = "0.49", default-features = false }
+png = "0.18"
 serde_json.workspace = true
 tzf-rs = { version = "2.1", default-features = false, features = ["bundled"] }
 
