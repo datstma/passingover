@@ -6,6 +6,7 @@
 use std::time::{Duration, SystemTime};
 
 use crate::flight::{Flight, local_time};
+use crate::log::LogStats;
 use crate::weather::Weather;
 
 /// How to show values that have units. Metric by default.
@@ -111,6 +112,76 @@ pub fn journey(flight: &Flight) -> Option<String> {
     } else {
         format!("{left} and will cross {}.", list(&flight.ahead))
     })
+}
+
+/// Gentle sentences about the daydream log for a period such as "This
+/// month" (D38).
+pub fn log_summary(stats: &LogStats, period: &str, units: Units) -> Vec<String> {
+    if stats.flights == 0 {
+        return vec![if stats.first_seen_unix_ms.is_none() {
+            "Nothing here yet. Planes that pass over will be remembered here.".to_owned()
+        } else {
+            format!("{period}, no flights with a known destination passed over.")
+        }];
+    }
+    let planes = plural(stats.flights, "plane", "planes");
+    let mut lines = vec![if stats.places == 1 {
+        let only = stats.top.first().map_or("", |t| t.0.as_str());
+        format!("{period}, {planes} passed over, all on their way to {only}.")
+    } else {
+        format!(
+            "{period}, {planes} passed over on their way to {} in {}.",
+            plural(stats.places, "city", "cities"),
+            plural(stats.countries, "country", "countries"),
+        )
+    }];
+    if let Some((place, km)) = &stats.farthest
+        && stats.places > 1
+    {
+        lines.push(format!(
+            "The farthest was going to {place}, about {} away.",
+            distance(*km, units)
+        ));
+    }
+    let often: Vec<String> = stats
+        .top
+        .iter()
+        .filter(|(_, n)| *n > 1)
+        .map(|(place, n)| format!("{place} ({})", grouped(*n)))
+        .collect();
+    if stats.places > 1 && !often.is_empty() {
+        lines.push(format!("Most often: {}.", list(&often)));
+    }
+    lines
+}
+
+/// `1 plane`, `1,284 planes`.
+fn plural(n: u32, one: &str, many: &str) -> String {
+    format!("{} {}", grouped(n), if n == 1 { one } else { many })
+}
+
+/// `1,284`.
+fn grouped(n: u32) -> String {
+    let digits = n.to_string();
+    let mut out = String::new();
+    for (i, c) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(c);
+    }
+    out
+}
+
+/// `10,000 km` or `6,200 mi`, rounded to a calm figure.
+fn distance(km: f64, units: Units) -> String {
+    let (value, unit) = match units {
+        Units::Metric => (km, "km"),
+        Units::Imperial => (km / 1.609_344, "mi"),
+    };
+    let step = if value >= 1000.0 { 100.0 } else { 10.0 };
+    let rounded = ((value / step).round() * step).max(step) as u32;
+    format!("{} {unit}", grouped(rounded))
 }
 
 /// `7 h 40 min`, `2 h`, `35 min`.
@@ -276,6 +347,54 @@ mod tests {
         assert_eq!(list(&["A".into()]), "A");
         assert_eq!(list(&["A".into(), "B".into()]), "A and B");
         assert_eq!(list(&["A".into(), "B".into(), "C".into()]), "A, B and C");
+    }
+
+    fn stats(flights: u32, places: u32, countries: u32) -> LogStats {
+        LogStats {
+            flights,
+            places,
+            countries,
+            top: vec![
+                ("London".into(), 34),
+                ("Paris".into(), 21),
+                ("Oslo".into(), 1),
+            ],
+            farthest: Some(("Singapore".into(), 9_987.0)),
+            first_seen_unix_ms: Some(0),
+        }
+    }
+
+    #[test]
+    fn the_log_reads_gently() {
+        assert_eq!(
+            log_summary(&stats(1284, 61, 24), "This month", Units::Metric),
+            [
+                "This month, 1,284 planes passed over on their way to 61 cities in 24 countries.",
+                "The farthest was going to Singapore, about 10,000 km away.",
+                "Most often: London (34) and Paris (21).",
+            ]
+        );
+        assert_eq!(
+            log_summary(&stats(5, 2, 1), "Today", Units::Imperial)[1],
+            "The farthest was going to Singapore, about 6,200 mi away."
+        );
+        let mut one = stats(3, 1, 1);
+        one.top.truncate(1);
+        assert_eq!(
+            log_summary(&one, "This week", Units::Metric),
+            ["This week, 3 planes passed over, all on their way to London."]
+        );
+    }
+
+    #[test]
+    fn an_empty_log_says_so() {
+        let mut empty = stats(0, 0, 0);
+        assert_eq!(
+            log_summary(&empty, "This week", Units::Metric),
+            ["This week, no flights with a known destination passed over."]
+        );
+        empty.first_seen_unix_ms = None;
+        assert!(log_summary(&empty, "This week", Units::Metric)[0].starts_with("Nothing here yet"));
     }
 
     #[test]

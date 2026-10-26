@@ -11,6 +11,7 @@ pub mod data;
 pub mod flight;
 pub mod geo;
 pub mod http;
+pub mod log;
 pub mod polite;
 pub mod position;
 pub mod regions;
