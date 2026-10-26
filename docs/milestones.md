@@ -10,7 +10,7 @@ Status values: **Not started** · **In progress** · **Done**.
 | M3 | Daydream enrichment | Done |
 | M4 | Ambient mode | Done |
 | M5 | Daydream log | Done |
-| M6 | Native extras | Not started |
+| M6 | Native extras | In progress |
 | M7 | Release | Not started |
 
 ---
@@ -136,6 +136,12 @@ to 61 cities").
 
 macOS menu bar / tray icon; iOS and Android home-screen widgets (native Swift
 or Kotlin where required).
+
+- [x] macOS menu bar item (D39)
+- [ ] Android home-screen widget — waiting on a decision about background
+      refresh
+- [ ] iOS home-screen widget — needs a WidgetKit extension target created
+      in Xcode, and an App Group
 
 ## M7 — Release
 

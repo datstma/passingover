@@ -526,3 +526,21 @@ the CLI uses rolling ones (`now --log FILE`, `log --log FILE`).
 
 **Why:** the "daydream log" from the brief without making the app a
 location diary: what passed over, not where you were.
+
+### D39 — macOS menu bar item, native and on by default
+*2026-10-26 · Accepted*
+
+On macOS, Passing Over shows an airplane and the nearest flight's
+destination in the menu bar ("✈ Chicago"); its menu lists the flights'
+sentences, when it was updated and from which source, plus Show, Ambient
+mode and Quit. It is native Swift (`NSStatusItem` in
+`MainFlutterWindow.swift`) driven over a method channel, with no plugin
+and no new Xcode files. While the item is shown, closing the window hides
+it (the Dock icon brings it back) and polling continues at the ambient
+pace, once a minute: a visible menu bar item counts as "visible" for D15.
+It can be turned off in settings. Windows and Linux get no tray icon for
+now (the brief asks for the macOS menu bar; a Linux tray needs extra system
+libraries).
+
+**Why:** a glance at the menu bar is the calmest possible view; doing it
+natively keeps the dependency list short.
