@@ -70,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 2137190470;
+  int get rustContentHash => -637746468;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -82,6 +82,10 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<void> crateApiSkySkyHandleClearLog({required SkyHandle that});
+
+  void crateApiSkySkyHandleCloseLog({required SkyHandle that});
+
   Future<DataInfo> crateApiSkySkyHandleLoadData({
     required SkyHandle that,
     required List<int> routesGz,
@@ -94,9 +98,23 @@ abstract class RustLibApi extends BaseApi {
     required List<int> regionsGz,
   });
 
+  Future<List<String>> crateApiSkySkyHandleLogSummary({
+    required SkyHandle that,
+    required PlatformInt64 sinceUnixMs,
+    required String period,
+    double? lat,
+    double? lon,
+    required bool imperial,
+  });
+
   SkyHandle crateApiSkySkyHandleNew({
     required Source primary,
     required int seed,
+  });
+
+  Future<int> crateApiSkySkyHandleOpenLog({
+    required SkyHandle that,
+    required String path,
   });
 
   Future<PollResult> crateApiSkySkyHandlePoll({
@@ -154,6 +172,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<void> crateApiSkySkyHandleClearLog({required SkyHandle that}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSkySkyHandleClearLogConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleClearLogConstMeta =>
+      const TaskConstMeta(debugName: "SkyHandle_clear_log", argNames: ["that"]);
+
+  @override
+  void crateApiSkySkyHandleCloseLog({required SkyHandle that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkySkyHandleCloseLogConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleCloseLogConstMeta =>
+      const TaskConstMeta(debugName: "SkyHandle_close_log", argNames: ["that"]);
+
+  @override
   Future<DataInfo> crateApiSkySkyHandleLoadData({
     required SkyHandle that,
     required List<int> routesGz,
@@ -174,7 +249,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 3,
             port: port_,
           );
         },
@@ -212,7 +287,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 4,
             port: port_,
           );
         },
@@ -234,6 +309,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<List<String>> crateApiSkySkyHandleLogSummary({
+    required SkyHandle that,
+    required PlatformInt64 sinceUnixMs,
+    required String period,
+    double? lat,
+    double? lon,
+    required bool imperial,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          sse_encode_i_64(sinceUnixMs, serializer);
+          sse_encode_String(period, serializer);
+          sse_encode_opt_box_autoadd_f_64(lat, serializer);
+          sse_encode_opt_box_autoadd_f_64(lon, serializer);
+          sse_encode_bool(imperial, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSkySkyHandleLogSummaryConstMeta,
+        argValues: [that, sinceUnixMs, period, lat, lon, imperial],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleLogSummaryConstMeta =>
+      const TaskConstMeta(
+        debugName: "SkyHandle_log_summary",
+        argNames: ["that", "sinceUnixMs", "period", "lat", "lon", "imperial"],
+      );
+
+  @override
   SkyHandle crateApiSkySkyHandleNew({
     required Source primary,
     required int seed,
@@ -244,7 +365,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_source(primary, serializer);
           sse_encode_u_32(seed, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -262,6 +383,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     debugName: "SkyHandle_new",
     argNames: ["primary", "seed"],
   );
+
+  @override
+  Future<int> crateApiSkySkyHandleOpenLog({
+    required SkyHandle that,
+    required String path,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSkyHandle(
+            that,
+            serializer,
+          );
+          sse_encode_String(path, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_32,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSkySkyHandleOpenLogConstMeta,
+        argValues: [that, path],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSkySkyHandleOpenLogConstMeta =>
+      const TaskConstMeta(
+        debugName: "SkyHandle_open_log",
+        argNames: ["that", "path"],
+      );
 
   @override
   Future<PollResult> crateApiSkySkyHandlePoll({
@@ -286,7 +445,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 8,
             port: port_,
           );
         },
@@ -316,7 +475,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_source,
@@ -346,7 +505,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_box_autoadd_usage(usage, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -375,7 +534,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_usage,
@@ -418,7 +577,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 12,
             port: port_,
           );
         },
@@ -454,7 +613,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_f_64(roll, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_source,
@@ -479,7 +638,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_credit,
@@ -501,7 +660,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -526,7 +685,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 16,
             port: port_,
           );
         },
@@ -550,7 +709,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_poll_timing,
@@ -708,6 +867,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PlatformInt64 dco_decode_i_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeI64(raw);
+  }
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
   }
 
   @protected
@@ -990,6 +1155,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getPlatformInt64();
+  }
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -1294,6 +1471,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_credit(List<Credit> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -1462,6 +1648,14 @@ class SkyHandleImpl extends RustOpaque implements SkyHandle {
         RustLib.instance.api.rust_arc_decrement_strong_count_SkyHandlePtr,
   );
 
+  /// Forget everything in the log, file included.
+  Future<void> clearLog() =>
+      RustLib.instance.api.crateApiSkySkyHandleClearLog(that: this);
+
+  /// Stop logging (the file stays unless cleared).
+  void closeLog() =>
+      RustLib.instance.api.crateApiSkySkyHandleCloseLog(that: this);
+
   /// Load the bundled standing data (gzipped tables, D29).
   Future<DataInfo> loadData({
     required List<int> routesGz,
@@ -1479,6 +1673,28 @@ class SkyHandleImpl extends RustOpaque implements SkyHandle {
       .instance
       .api
       .crateApiSkySkyHandleLoadRegions(that: this, regionsGz: regionsGz);
+
+  /// Sentences about the log since `since_unix_ms`, e.g. "This month, …".
+  /// `lat`/`lon` (not stored) find the farthest destination.
+  Future<List<String>> logSummary({
+    required PlatformInt64 sinceUnixMs,
+    required String period,
+    double? lat,
+    double? lon,
+    required bool imperial,
+  }) => RustLib.instance.api.crateApiSkySkyHandleLogSummary(
+    that: this,
+    sinceUnixMs: sinceUnixMs,
+    period: period,
+    lat: lat,
+    lon: lon,
+    imperial: imperial,
+  );
+
+  /// Keep a daydream log in `path` (D38). Returns how many passages it
+  /// already holds.
+  Future<int> openLog({required String path}) =>
+      RustLib.instance.api.crateApiSkySkyHandleOpenLog(that: this, path: path);
 
   /// Fetch what is overhead. `lat`/`lon` stay on the device; only a
   /// rounded point (~1 km) is sent.

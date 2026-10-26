@@ -78,6 +78,34 @@ class FakeSkyApi implements SkyApi {
   @override
   Usage get usage => _usage;
 
+  bool logOpen = false;
+  List<String> summary = const [
+    'This month, 1,284 planes passed over on their way to 61 cities in 24 countries.',
+    'Most often: London (34) and Paris (21).',
+  ];
+  final List<String> summaryPeriods = [];
+
+  @override
+  Future<void> openLog() async => logOpen = true;
+
+  @override
+  void closeLog() => logOpen = false;
+
+  @override
+  Future<void> clearLog() async => summary = const ['Nothing here yet.'];
+
+  @override
+  Future<List<String>> logSummary(
+    DateTime since,
+    String period, {
+    double? lat,
+    double? lon,
+    required bool imperial,
+  }) async {
+    summaryPeriods.add(period);
+    return logOpen ? summary : const [];
+  }
+
   @override
   PollTiming get timing => const PollTiming(
     intervalMs: 15000,

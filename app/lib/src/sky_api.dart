@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'rust/api/sky.dart';
 
@@ -19,6 +20,22 @@ abstract class SkyApi {
   Usage get usage;
 
   PollTiming get timing;
+
+  /// Start keeping the daydream log in the app's private folder (D38).
+  Future<void> openLog();
+
+  void closeLog();
+
+  Future<void> clearLog();
+
+  /// Sentences about the log since `since`, labelled `period`.
+  Future<List<String>> logSummary(
+    DateTime since,
+    String period, {
+    double? lat,
+    double? lon,
+    required bool imperial,
+  });
 }
 
 class RustSkyApi implements SkyApi {
@@ -64,4 +81,32 @@ class RustSkyApi implements SkyApi {
 
   @override
   PollTiming get timing => pollTiming();
+
+  @override
+  Future<void> openLog() async {
+    final dir = await getApplicationSupportDirectory();
+    await dir.create(recursive: true);
+    await _handle.openLog(path: '${dir.path}/daydream-log.tsv');
+  }
+
+  @override
+  void closeLog() => _handle.closeLog();
+
+  @override
+  Future<void> clearLog() => _handle.clearLog();
+
+  @override
+  Future<List<String>> logSummary(
+    DateTime since,
+    String period, {
+    double? lat,
+    double? lon,
+    required bool imperial,
+  }) => _handle.logSummary(
+    sinceUnixMs: since.millisecondsSinceEpoch,
+    period: period,
+    lat: lat,
+    lon: lon,
+    imperial: imperial,
+  );
 }

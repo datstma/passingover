@@ -123,6 +123,11 @@ void main() {
     }
     debugPrint('LIVE credits: ${controller.view!.credits.map((c) => c.text)}');
     debugPrint('LIVE bundled data: ${controller.hasBundledData}');
+    final summary = await tester.runAsync(
+      () => controller.logSummary(LogPeriod.all),
+    );
+    debugPrint('LIVE log: ${summary!.join(' ')}');
+    expect(summary, isNotEmpty);
 
     // Ambient mode really fills the screen on desktops (D36).
     if (DeviceAmbientPlatform.isDesktop) {

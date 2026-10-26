@@ -9,6 +9,7 @@ use passingover_core::data::StandingData;
 use passingover_core::flight::{local_time, Flight};
 use passingover_core::geo::{Coordinate, Radius};
 use passingover_core::http::{user_agent, UreqClient};
+use passingover_core::log::DaydreamLog;
 use passingover_core::position::{
     choose_primary, AdsbFi, AdsbLol, DailyUsage, FetchError, PositionSource, SourceId,
 };
@@ -148,6 +149,7 @@ pub fn data_credits() -> Vec<Credit> {
 pub struct SkyHandle {
     sky: Sky,
     client: UreqClient,
+    log: Option<DaydreamLog>,
 }
 
 impl SkyHandle {
@@ -156,6 +158,7 @@ impl SkyHandle {
         SkyHandle {
             sky: Sky::new(primary.into(), seed.into()),
             client: UreqClient::new(&user_agent("PassingOver")),
+            log: None,
         }
     }
 
@@ -219,16 +222,65 @@ impl SkyHandle {
             .sky
             .poll(&self.client, here, radius, wall, Instant::now())
         {
-            Ok(overhead) => PollResult {
-                view: Some(view(&overhead, wall, units(imperial))),
-                error: None,
-                retry_after_secs: None,
-            },
+            Ok(overhead) => {
+                if let Some(log) = &mut self.log {
+                    // The view matters more than the log; a full disk
+                    // shouldn't blank the screen.
+                    let _ = log.record(&overhead, wall);
+                }
+                PollResult {
+                    view: Some(view(&overhead, wall, units(imperial))),
+                    error: None,
+                    retry_after_secs: None,
+                }
+            }
             Err(FetchError::Unavailable { retry_after }) => failure(
                 "No aircraft data source is available right now.".into(),
                 retry_after.map(|d| d.as_secs().min(u32::MAX.into()) as u32),
             ),
             Err(e) => failure(e.to_string(), None),
+        }
+    }
+
+    /// Keep a daydream log in `path` (D38). Returns how many passages it
+    /// already holds.
+    pub fn open_log(&mut self, path: String) -> Result<u32, String> {
+        let log = DaydreamLog::open(std::path::Path::new(&path)).map_err(|e| e.to_string())?;
+        let count = log.passages().len() as u32;
+        self.log = Some(log);
+        Ok(count)
+    }
+
+    /// Stop logging (the file stays unless cleared).
+    #[frb(sync)]
+    pub fn close_log(&mut self) {
+        self.log = None;
+    }
+
+    /// Sentences about the log since `since_unix_ms`, e.g. "This month, …".
+    /// `lat`/`lon` (not stored) find the farthest destination.
+    pub fn log_summary(
+        &self,
+        since_unix_ms: i64,
+        period: String,
+        lat: Option<f64>,
+        lon: Option<f64>,
+        imperial: bool,
+    ) -> Vec<String> {
+        let Some(log) = &self.log else {
+            return Vec::new();
+        };
+        let here = lat
+            .zip(lon)
+            .and_then(|(lat, lon)| Coordinate::new(lat, lon).ok());
+        story::log_summary(&log.stats(since_unix_ms, here), &period, units(imperial))
+    }
+
+    /// Forget everything in the log, file included.
+    pub fn clear_log(&mut self) -> Result<(), String> {
+        match &mut self.log {
+            Some(log) => log.clear().map_err(|e| e.to_string()),
+            None => Ok(()),
         }
     }
 
@@ -418,6 +470,24 @@ mod tests {
         assert!(result.error.unwrap().contains("latitude"));
         assert!(handle.load_data(vec![1, 2, 3], vec![], vec![]).is_err());
         assert!(handle.load_regions(vec![1, 2, 3]).is_err());
+    }
+
+    #[test]
+    fn the_log_opens_summarises_and_clears() {
+        let dir =
+            std::env::temp_dir().join(format!("passingover-bridge-log-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("log.tsv");
+        let mut handle = SkyHandle::new(Source::AdsbLol, 1);
+        assert!(handle
+            .log_summary(0, "So far".into(), None, None, false)
+            .is_empty());
+        assert_eq!(handle.open_log(path.to_string_lossy().into()).unwrap(), 0);
+        let summary = handle.log_summary(0, "So far".into(), None, None, false);
+        assert!(summary[0].starts_with("Nothing here yet"), "{summary:?}");
+        handle.clear_log().unwrap();
+        handle.close_log();
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

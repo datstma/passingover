@@ -21,6 +21,12 @@ List<Credit> dataCredits() => RustLib.instance.api.crateApiSkyDataCredits();
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SkyHandle>>
 abstract class SkyHandle implements RustOpaqueInterface {
+  /// Forget everything in the log, file included.
+  Future<void> clearLog();
+
+  /// Stop logging (the file stays unless cleared).
+  void closeLog();
+
   /// Load the bundled standing data (gzipped tables, D29).
   Future<DataInfo> loadData({
     required List<int> routesGz,
@@ -31,10 +37,24 @@ abstract class SkyHandle implements RustOpaqueInterface {
   /// Load the bundled countries and seas (D33).
   Future<void> loadRegions({required List<int> regionsGz});
 
+  /// Sentences about the log since `since_unix_ms`, e.g. "This month, …".
+  /// `lat`/`lon` (not stored) find the farthest destination.
+  Future<List<String>> logSummary({
+    required PlatformInt64 sinceUnixMs,
+    required String period,
+    double? lat,
+    double? lon,
+    required bool imperial,
+  });
+
   factory SkyHandle({required Source primary, required int seed}) => RustLib
       .instance
       .api
       .crateApiSkySkyHandleNew(primary: primary, seed: seed);
+
+  /// Keep a daydream log in `path` (D38). Returns how many passages it
+  /// already holds.
+  Future<int> openLog({required String path});
 
   /// Fetch what is overhead. `lat`/`lon` stay on the device; only a
   /// rounded point (~1 km) is sent.

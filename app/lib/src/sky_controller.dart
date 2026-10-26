@@ -8,6 +8,28 @@ import 'rust/api/sky.dart';
 import 'settings.dart';
 import 'sky_api.dart';
 
+/// A stretch of the daydream log.
+enum LogPeriod {
+  week('This week'),
+  month('This month'),
+  all('So far');
+
+  const LogPeriod(this.label);
+
+  final String label;
+
+  /// Local start of the period, as of `now`.
+  DateTime since(DateTime now) => switch (this) {
+    LogPeriod.week => DateTime(
+      now.year,
+      now.month,
+      now.day - (now.weekday - 1),
+    ),
+    LogPeriod.month => DateTime(now.year, now.month),
+    LogPeriod.all => DateTime.fromMillisecondsSinceEpoch(0),
+  };
+}
+
 enum SkyPhase {
   /// Loading data and finding the location.
   starting,
@@ -68,6 +90,13 @@ class SkyController extends ChangeNotifier {
 
   Future<void> start() async {
     hasBundledData = await _api.loadBundledData();
+    if (_settings.keepLog) {
+      try {
+        await _api.openLog();
+      } catch (_) {
+        // Without a log the app still works.
+      }
+    }
     await _locate();
     await _poll();
   }
@@ -109,6 +138,31 @@ class SkyController extends ChangeNotifier {
       _schedule(null);
     }
   }
+
+  bool get keepLog => _settings.keepLog;
+
+  Future<void> setKeepLog(bool keep) async {
+    await _settings.setKeepLog(keep);
+    if (keep) {
+      await _api.openLog();
+    } else {
+      _api.closeLog();
+    }
+    notifyListeners();
+  }
+
+  Future<void> clearLog() async {
+    await _api.clearLog();
+    notifyListeners();
+  }
+
+  Future<List<String>> logSummary(LogPeriod period) => _api.logSummary(
+    period.since(_clock()),
+    period.label,
+    lat: here?.lat,
+    lon: here?.lon,
+    imperial: _settings.imperial,
+  );
 
   Future<void> setImperial(bool imperial) async {
     await _settings.setImperial(imperial);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'ambient/ambient_screen.dart';
+import 'log_screen.dart';
 import 'rust/api/sky.dart';
 import 'sheets.dart';
 import 'sky_controller.dart';
@@ -64,6 +65,16 @@ class _Header extends StatelessWidget {
                 fontWeight: FontWeight.w300,
                 letterSpacing: 1.2,
                 color: _bright,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Daydream log',
+            color: _soft,
+            icon: const Icon(Icons.auto_stories_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => LogScreen(controller: controller),
               ),
             ),
           ),

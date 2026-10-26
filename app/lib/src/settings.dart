@@ -87,6 +87,11 @@ class Settings {
   Future<void> setImperial(bool imperial) =>
       _prefs.setBool('units.imperial', imperial);
 
+  /// Keep a daydream log on this device (D38). On unless turned off.
+  bool get keepLog => _prefs.getBool('log.keep') ?? true;
+
+  Future<void> setKeepLog(bool keep) => _prefs.setBool('log.keep', keep);
+
   AmbientTheme get ambientTheme =>
       _prefs.getString('ambient.theme') == AmbientTheme.ledMatrix.name
       ? AmbientTheme.ledMatrix
