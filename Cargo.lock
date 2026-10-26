@@ -1392,6 +1392,7 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "csv",
+ "flate2",
  "serde_json",
  "tzf-rs",
 ]

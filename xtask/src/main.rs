@@ -7,11 +7,13 @@
 //! `data` shallow-clones (or updates) the VRS standing data into
 //! `target/xtask/`, adds an IANA time zone to every airport with tzf-rs, and
 //! writes the tables described in `passingover_core::data` to `data/` (or
-//! `--out`), with a manifest and a NOTICE (D24).
+//! `--out`), with a manifest and a NOTICE (D24). It also writes gzipped
+//! copies for the app to bundle to `app/assets/data/` (D29).
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Write as _;
 use std::fs;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -76,13 +78,28 @@ fn data(args: &[String]) -> Result<()> {
     write_table(&out.join("routes.tsv"), ROUTES_HEADER, &routes)?;
     write_table(&out.join("airports.tsv"), AIRPORTS_HEADER, &airports)?;
     write_table(&out.join("airlines.tsv"), AIRLINES_HEADER, &airlines)?;
-    write(
-        &out.join("manifest.json"),
-        &manifest(&commit, &commit_date, &routes, &airports, &airlines),
-    )?;
+    let manifest = manifest(&commit, &commit_date, &routes, &airports, &airlines);
+    write(&out.join("manifest.json"), &manifest)?;
     write(&out.join("NOTICE.md"), NOTICE)?;
     println!("wrote {}", out.display());
+
+    let assets = root.join("app/assets/data");
+    fs::create_dir_all(&assets).map_err(|e| format!("{}: {e}", assets.display()))?;
+    for name in ["routes.tsv", "airports.tsv", "airlines.tsv"] {
+        let text = fs::read(out.join(name)).map_err(|e| format!("{name}: {e}"))?;
+        write_gzip(&assets.join(format!("{name}.gz")), &text)?;
+    }
+    write(&assets.join("manifest.json"), &manifest)?;
+    write(&assets.join("NOTICE.md"), NOTICE)?;
+    println!("wrote {}", assets.display());
     Ok(())
+}
+
+fn write_gzip(path: &Path, bytes: &[u8]) -> Result<()> {
+    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::best());
+    encoder.write_all(bytes).map_err(|e| e.to_string())?;
+    let gz = encoder.finish().map_err(|e| e.to_string())?;
+    fs::write(path, gz).map_err(|e| format!("{}: {e}", path.display()))
 }
 
 /// Clone the VRS repository, or bring an existing shallow clone up to date.

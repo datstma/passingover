@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 csv = "1.4"
+flate2.workspace = true
 serde_json.workspace = true
 tzf-rs = { version = "2.1", default-features = false, features = ["bundled"] }
 

@@ -46,3 +46,7 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Standing data built by `cargo xtask data` (D29)
+/assets/data/*
+!/assets/data/README.md
