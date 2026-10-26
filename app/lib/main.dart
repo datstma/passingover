@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/ambient/ambient_platform.dart';
+import 'src/home_screen_widget.dart';
 import 'src/location.dart';
 import 'src/menu_bar.dart';
 import 'src/now_screen.dart';
@@ -46,6 +47,7 @@ Future<void> main() async {
   if (MacMenuBar.supported) {
     MacMenuBar(controller: controller, navigatorKey: navigatorKey).start();
   }
+  if (HomeScreenWidget.supported) HomeScreenWidget(controller).start();
   unawaited(controller.start());
 }
 

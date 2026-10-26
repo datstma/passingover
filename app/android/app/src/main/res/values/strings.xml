@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Passing Over</string>
+    <string name="widget_description">Where the nearest plane overhead is going</string>
+    <string name="widget_open_app">Open Passing Over to look up</string>
+</resources>

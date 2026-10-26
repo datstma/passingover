@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'settings.dart';
@@ -36,11 +37,21 @@ class DeviceLocation implements LocationProvider {
           'Passing Over doesn\'t have permission to use your location.',
         );
       }
+      const timeLimit = Duration(seconds: 30);
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-          timeLimit: Duration(seconds: 30),
-        ),
+        // On Android, use the platform's LocationManager rather than Google
+        // Play services: it needs no Google account or "Location Accuracy"
+        // prompt, and coarse location is all we ask for (D31).
+        locationSettings: defaultTargetPlatform == TargetPlatform.android
+            ? AndroidSettings(
+                accuracy: LocationAccuracy.low,
+                timeLimit: timeLimit,
+                forceLocationManager: true,
+              )
+            : const LocationSettings(
+                accuracy: LocationAccuracy.low,
+                timeLimit: timeLimit,
+              ),
       );
       return LocationResult.found(
         LatLon(position.latitude, position.longitude),
