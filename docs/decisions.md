@@ -477,3 +477,33 @@ sentence reads "Left Stockholm about 1 h 10 min ago and will cross …".
 
 **Why:** like the landing estimate (D12), simple and good enough to
 daydream with; no free source has actual departure times.
+
+### D36 — Ambient mode
+*2026-10-26 · Accepted*
+
+A full-screen view for a desktop, a spare tablet or a TV, opened from the
+Now screen. It shows one flight at a time, cross-fading to the next every
+12 seconds, and polls every 60 seconds (D15). It keeps the screen awake
+(wakelock_plus) and fills it: window_manager full screen on desktops (the
+window is brought to the front first, because macOS ignores full screen for
+a background window), immersive mode on phones and tablets. A dimming
+schedule fades the view to 30 % at night (23:00–07:00 by default, 30-minute
+fades, adjustable or off); it dims inside the app, so no system brightness
+permission is needed. Two themes: "Night sky" (the Now screen's sentences in
+large light type over a slowly twinkling star field) and "LED" (D37). Tap
+for controls; Esc or back to leave.
+
+**Why:** the brief's "free, software FlightWall": calm, readable across a
+room, and polite to the sources even when left on all day.
+
+### D37 — LED theme with an own 5×7 dot font
+*2026-10-26 · Accepted*
+
+The LED theme draws amber dots on a fixed grid from a small 5×7 font written
+for the project (capitals, digits, the punctuation flight lines need, a
+`→`). Accented letters fold to their base letter (Malmö → MALMO); other
+scripts become spaces. Rows are terse ("LANDS IN 7 H 40 MIN"); lines that
+don't fit scroll one whole column at a time, like a real board.
+
+**Why:** an own font keeps the look exact on every platform with no font
+licence to track; folding keeps every city readable.

@@ -8,7 +8,7 @@ Status values: **Not started** · **In progress** · **Done**.
 | M1 | Core + CLI | Done |
 | M2 | First app view | Done |
 | M3 | Daydream enrichment | Done |
-| M4 | Ambient mode | Not started |
+| M4 | Ambient mode | Done |
 | M5 | Daydream log | Not started |
 | M6 | Native extras | Not started |
 | M7 | Release | Not started |
@@ -114,6 +114,12 @@ ago), and what it will cross.
 
 A full-screen calm view for a desktop, spare tablet or TV, with night-sky and
 LED-matrix themes and an auto-brightness schedule.
+
+- [x] Ambient screen: one flight at a time, 12 s cross-fade, 60 s polling,
+      screen kept awake, full screen on desktop (verified on macOS) and
+      immersive on mobile (D36)
+- [x] Themes: night sky (star field) and LED matrix (own 5×7 font, D37)
+- [x] Dimming schedule, adjustable, inside the app
 
 ## M5 — Daydream log
 
