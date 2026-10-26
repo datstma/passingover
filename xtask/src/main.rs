@@ -33,7 +33,7 @@ const SEA_TOLERANCE_DEG: f64 = 0.02;
 const ROUTES_HEADER: &str = "#passingover-routes\t1";
 const AIRPORTS_HEADER: &str = "#passingover-airports\t1";
 const AIRLINES_HEADER: &str = "#passingover-airlines\t1";
-const REGIONS_HEADER: &str = "#passingover-regions\t1";
+const REGIONS_HEADER: &str = "#passingover-regions\t2";
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -357,8 +357,8 @@ fn download(dir: &Path, name: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// One line per polygon: kind, display name, rings (see
-/// passingover_core::regions). Countries from the 1:110m admin-0 layer, seas
+/// One line per polygon: kind, display name, ISO 3166 code (countries),
+/// rings (see passingover_core::regions). Countries from the 1:110m admin-0 layer, seas
 /// from the 1:50m marine layer, simplified.
 fn read_regions(countries: &Path, seas: &Path) -> Result<Vec<Vec<String>>> {
     let mut rows = Vec::new();
@@ -389,6 +389,13 @@ fn read_regions(countries: &Path, seas: &Path) -> Result<Vec<Vec<String>>> {
                     .unwrap_or_default(),
                 _ => continue,
             };
+            // ISO_A2_EH fixes ISO_A2's "-99" for e.g. France and Norway.
+            let iso = props["ISO_A2_EH"]
+                .as_str()
+                .or(props["ISO_A2"].as_str())
+                .filter(|c| kind == "c" && c.len() == 2)
+                .unwrap_or("")
+                .to_owned();
             let tolerance = if kind == "w" { SEA_TOLERANCE_DEG } else { 0.0 };
             for polygon in polygons {
                 let rings: Vec<String> = polygon
@@ -398,7 +405,12 @@ fn read_regions(countries: &Path, seas: &Path) -> Result<Vec<Vec<String>>> {
                     .filter_map(|ring| ring_text(ring, tolerance))
                     .collect();
                 if !rings.is_empty() {
-                    rows.push(vec![kind.to_owned(), name.clone(), rings.join(";")]);
+                    rows.push(vec![
+                        kind.to_owned(),
+                        name.clone(),
+                        iso.clone(),
+                        rings.join(";"),
+                    ]);
                 }
             }
         }

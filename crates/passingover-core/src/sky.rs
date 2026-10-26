@@ -131,7 +131,11 @@ impl Sky {
         if let Some(regions) = &self.regions {
             for f in &mut flights {
                 if let Some(leg) = &f.leg {
-                    f.ahead = regions.ahead(f.aircraft.position, leg.destination.position);
+                    let skip = [
+                        leg.origin.country.as_str(),
+                        leg.destination.country.as_str(),
+                    ];
+                    f.ahead = regions.ahead(f.aircraft.position, leg.destination.position, &skip);
                 }
             }
         }

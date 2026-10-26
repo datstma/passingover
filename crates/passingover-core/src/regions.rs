@@ -1,11 +1,12 @@
 //! The countries and seas a flight passes over (M3, D33): point-in-polygon on
 //! simplified Natural Earth shapes (public domain), built by `cargo xtask data`.
 //!
-//! `regions.tsv` starts with the header `#passingover-regions\t1`, then one
-//! polygon per line: `kind\tname\trings`. `kind` is `c` (country) or `w`
-//! (water); `name` is ready for a sentence ("Norway", "the North Sea");
-//! `rings` are separated by `;`, the first is the outline and any others are
-//! holes, each `lon,lat lon,lat …` in degrees.
+//! `regions.tsv` starts with the header `#passingover-regions\t2`, then one
+//! polygon per line: `kind\tname\tiso\trings`. `kind` is `c` (country) or
+//! `w` (water); `name` is ready for a sentence ("Norway", "the North Sea");
+//! `iso` is a country's ISO 3166-1 alpha-2 code, if it has one; `rings` are
+//! separated by `;`, the first is the outline and any others are holes, each
+//! `lon,lat lon,lat …` in degrees.
 
 use std::io::Read;
 use std::path::Path;
@@ -14,7 +15,7 @@ use crate::data::DataError;
 use crate::geo::Coordinate;
 
 pub const REGIONS_FILE: &str = "regions.tsv";
-pub const REGIONS_HEADER: &str = "#passingover-regions\t1";
+pub const REGIONS_HEADER: &str = "#passingover-regions\t2";
 
 /// Distance between samples when walking a route.
 const STEP_M: f64 = 25_000.0;
@@ -70,6 +71,8 @@ impl Polygon {
 #[derive(Debug)]
 pub struct Regions {
     regions: Vec<(String, RegionKind)>,
+    /// Region index → ISO country code, where known.
+    iso: Vec<Option<String>>,
     /// Countries first, so land wins where outlines overlap the sea.
     polygons: Vec<Polygon>,
 }
@@ -108,14 +111,19 @@ impl Regions {
             ));
         }
         let mut regions: Vec<(String, RegionKind)> = Vec::new();
+        let mut iso: Vec<Option<String>> = Vec::new();
         let mut polygons = Vec::new();
         for (n, line) in lines.enumerate().filter(|(_, l)| !l.is_empty()) {
             let n = n + 2;
             let mut fields = line.split('\t');
-            let (Some(kind), Some(name), Some(rings), None) =
-                (fields.next(), fields.next(), fields.next(), fields.next())
-            else {
-                return Err(error(n, "expected 3 columns"));
+            let (Some(kind), Some(name), Some(code), Some(rings), None) = (
+                fields.next(),
+                fields.next(),
+                fields.next(),
+                fields.next(),
+                fields.next(),
+            ) else {
+                return Err(error(n, "expected 4 columns"));
             };
             let kind = match kind {
                 "c" => RegionKind::Country,
@@ -139,6 +147,7 @@ impl Regions {
                 Some(i) => i,
                 None => {
                     regions.push((name.to_owned(), kind));
+                    iso.push((!code.is_empty()).then(|| code.to_owned()));
                     regions.len() - 1
                 }
             };
@@ -158,7 +167,11 @@ impl Regions {
             });
         }
         polygons.sort_by_key(|p| regions[p.region].1 == RegionKind::Water);
-        Ok(Self { regions, polygons })
+        Ok(Self {
+            regions,
+            iso,
+            polygons,
+        })
     }
 
     /// The country under `point`, else the named sea, else `None`.
@@ -205,20 +218,48 @@ const MAX_AHEAD: usize = 3;
 impl Regions {
     /// What a flight at `here` will cross on the way to `destination`, for
     /// "will cross the Norwegian Sea, Greenland and Canada": leaves out the
-    /// region it is over now and the destination's region (wherever they
-    /// appear on the way), merges repeats, drops short stretches and keeps
-    /// the longest few, in route order.
-    pub fn ahead(&self, here: Coordinate, destination: Coordinate) -> Vec<String> {
-        let skip: Vec<&str> = [self.at(here), self.at(destination)]
-            .into_iter()
+    /// stretch it is over now and the destination's own stretch, plus the
+    /// current and destination countries wherever they reappear (a
+    /// coastline at this scale can split one country into several
+    /// stretches; seas are only dropped at the ends, because an ocean can
+    /// be both where a coastal airport plots and the longest part of the
+    /// way). Then merges repeats, drops short stretches and keeps the
+    /// longest few, in route order.
+    ///
+    /// `skip_countries` are ISO codes to leave out as well, normally the
+    /// origin and destination airports' countries: at this scale a coastal
+    /// airport can plot over the sea, so geometry alone can miss them.
+    pub fn ahead(
+        &self,
+        here: Coordinate,
+        destination: Coordinate,
+        skip_countries: &[&str],
+    ) -> Vec<String> {
+        let ends = [self.at(here), self.at(destination)];
+        let mut countries: Vec<&str> = ends
+            .iter()
             .flatten()
-            .map(|(name, _)| name)
+            .filter(|(_, kind)| *kind == RegionKind::Country)
+            .map(|(name, _)| *name)
             .collect();
-        let stretches: Vec<Stretch> = self
-            .along(here, destination)
-            .into_iter()
-            .filter(|s| !skip.contains(&s.name.as_str()))
-            .collect();
+        for (i, (name, _)) in self.regions.iter().enumerate() {
+            if self.iso[i]
+                .as_deref()
+                .is_some_and(|c| skip_countries.contains(&c))
+            {
+                countries.push(name);
+            }
+        }
+        let mut stretches = self.along(here, destination);
+        if !stretches.is_empty() {
+            stretches.remove(0);
+        }
+        if let Some((arrival, _)) = ends[1] {
+            while stretches.last().is_some_and(|s| s.name == arrival) {
+                stretches.pop();
+            }
+        }
+        stretches.retain(|s| !countries.contains(&s.name.as_str()));
         // Merge repeats, keeping the first position.
         let mut merged: Vec<(usize, String, f64)> = Vec::new();
         for (i, s) in stretches.into_iter().enumerate() {
@@ -244,9 +285,9 @@ mod tests {
     fn sample() -> Regions {
         Regions::parse(&format!(
             "{REGIONS_HEADER}\n\
-             c\tWestland\t0,0 10,0 10,10 0,10;4,4 6,4 6,6 4,6\n\
-             c\tEastland\t10,0 20,0 20,10 10,10\n\
-             w\tthe Middle Sea\t-10,-10 30,-10 30,20 -10,20\n"
+             c\tWestland\tWL\t0,0 10,0 10,10 0,10;4,4 6,4 6,6 4,6\n\
+             c\tEastland\tEL\t10,0 20,0 20,10 10,10\n\
+             w\tthe Middle Sea\t\t-10,-10 30,-10 30,20 -10,20\n"
         ))
         .unwrap()
     }
@@ -287,20 +328,28 @@ mod tests {
     fn ahead_skips_here_and_the_destination_country() {
         // From the sea west of Westland to the middle of Eastland.
         let r = sample();
-        assert_eq!(r.ahead(at(2.0, -5.0), at(2.0, 15.0)), ["Westland"]);
+        assert_eq!(r.ahead(at(2.0, -5.0), at(2.0, 15.0), &[]), ["Westland"]);
+        // Unless the origin airport's country is Westland.
+        assert!(r.ahead(at(2.0, -5.0), at(2.0, 15.0), &["WL"]).is_empty());
         // Within one country, nothing is worth naming.
-        assert!(r.ahead(at(1.0, 1.0), at(2.0, 9.0)).is_empty());
+        assert!(r.ahead(at(1.0, 1.0), at(2.0, 9.0), &[]).is_empty());
         // From inside Westland to the sea beyond Eastland: whatever the
         // destination lies in is left out, here the sea.
-        assert_eq!(r.ahead(at(2.0, 2.0), at(2.0, 25.0)), ["Eastland"]);
+        assert_eq!(r.ahead(at(2.0, 2.0), at(2.0, 25.0), &[]), ["Eastland"]);
+        // Starting over the sea, a sea crossed again later still counts:
+        // here Westland's lake, on the way to Eastland.
+        assert_eq!(
+            r.ahead(at(5.0, -5.0), at(5.0, 15.0), &[]),
+            ["Westland", "the Middle Sea"]
+        );
     }
 
     #[test]
     fn rejects_bad_files() {
         assert!(Regions::parse("#passingover-regions\t0\n").is_err());
-        let bad = format!("{REGIONS_HEADER}\nx\tX\t0,0 1,0 1,1\n");
+        let bad = format!("{REGIONS_HEADER}\nx\tX\t\t0,0 1,0 1,1\n");
         assert!(Regions::parse(&bad).is_err());
-        let short_ring = format!("{REGIONS_HEADER}\nc\tX\t0,0 1,0\n");
+        let short_ring = format!("{REGIONS_HEADER}\nc\tX\t\t0,0 1,0\n");
         assert!(Regions::parse(&short_ring).is_err());
     }
 }
