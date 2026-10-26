@@ -36,7 +36,7 @@ void main() {
       ],
     );
     expect(find.text('SK 945'), findsOneWidget);
-    expect(find.text('→ Chicago'), findsOneWidget);
+    expect(find.textContaining('Chicago', findRichText: true), findsOneWidget);
     expect(
       find.text('15:12 there · landing in about 7 h 40 min'),
       findsOneWidget,

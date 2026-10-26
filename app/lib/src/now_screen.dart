@@ -156,13 +156,7 @@ class _FlightTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              destination == null ? 'Destination unknown' : '→ $destination',
-              style: text.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w300,
-                color: destination == null ? _faint : _bright,
-              ),
-            ),
+            _Destination(name: destination, style: text.headlineMedium),
             if (details.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
@@ -180,6 +174,41 @@ class _FlightTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// "→ Chicago". The arrow is an icon: not every font has the glyph.
+class _Destination extends StatelessWidget {
+  const _Destination({required this.name, required this.style});
+
+  final String? name;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = style?.copyWith(fontWeight: FontWeight.w300);
+    if (name == null) {
+      return Text('Destination unknown', style: base?.copyWith(color: _faint));
+    }
+    return Text.rich(
+      TextSpan(
+        children: [
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: Icon(
+                Icons.east,
+                size: (base?.fontSize ?? 28) * 0.8,
+                color: _soft,
+              ),
+            ),
+          ),
+          TextSpan(text: name),
+        ],
+      ),
+      style: base?.copyWith(color: _bright),
     );
   }
 }
