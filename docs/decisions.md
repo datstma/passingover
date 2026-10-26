@@ -431,3 +431,49 @@ settings with shared_preferences, on the device only.
 
 **Why:** restarts must not reset the budget, and nothing about the user
 needs a server.
+
+### D33 — "Will cross": Natural Earth countries and seas, bundled
+*2026-10-26 · Accepted*
+
+`cargo xtask data` builds `regions.tsv` from Natural Earth (public domain):
+1:110m countries and 1:50m seas, sea outlines simplified to ~2 km, names
+ready for a sentence ("Norway", "the North Sea", "the United States"). The
+app bundles it gzipped (~180 KB). The core walks the great circle from the
+aircraft to its destination in 25 km steps and names what lies ahead: it
+leaves out the stretch the plane is over now and the destination's own
+stretch; the countries of the origin and destination airports (matched by
+ISO code, because at this scale a coastal airport such as JFK plots over the
+sea) and of where the plane is wherever they reappear; seas only at the
+ends, because a coastal airport can plot over the very ocean that is most
+of the way. Then it merges repeats, drops stretches under 50 km and keeps
+the three longest, in route order.
+
+**Why:** "will cross the Norwegian Sea, Greenland and Canada" is the
+daydream; public-domain shapes keep it offline and license-free.
+
+### D34 — Weather: batched, cached per airport, metric by default
+*2026-10-26 · Accepted · Details D13*
+
+Each poll asks Open-Meteo once for every destination not in the cache (up
+to 20 per request); if that fails, MET Norway is asked for at most three
+places, one request each. Answers are cached per airport for 15 minutes
+(Open-Meteo) or 30 (MET Norway, matching its `Expires`); a failing source
+pauses for 5 minutes. WMO codes and MET symbols map to one set of phrases
+("overcast", "raining", "snow showers"). Temperatures are °C unless the
+user picks °F. Flights landing near the user show neither the time nor the
+weather there: the user can look out of the window.
+
+**Why:** a handful of requests per poll at most, nothing about the user in
+them, and the sentence from the brief: "It's 15:12 there, 9°C and overcast."
+
+### D35 — The journey: departure estimate and "landing nearby"
+*2026-10-26 · Accepted*
+
+Time since departure = distance flown from the origin at an average
+420 kt, plus 10 minutes for the climb, rounded to 5 minutes; under 30 km
+from the origin it "just left". A destination within 60 km of the user is
+"nearby": "AA 43 → New York, landing nearby in about 5 min." The journey
+sentence reads "Left Stockholm about 1 h 10 min ago and will cross …".
+
+**Why:** like the landing estimate (D12), simple and good enough to
+daydream with; no free source has actual departure times.

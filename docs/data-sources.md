@@ -53,6 +53,7 @@ Constraints that shape the choice:
 | [OurAirports](#ourairports) | Airports | None (bundle) | n/a | **Public domain** | Yes | No (credit welcome) | Bundle | Airport enrichment; **no tz column** |
 | [mwgg/Airports](#mwggairports) | Airports with tz | None (bundle) | n/a | MIT | Yes | MIT notice | Bundle | Tz cross-check / fallback |
 | [OpenFlights](#openflights) | Airports, routes | None | n/a | ODbL + DbCL | Paid licence on request | Yes | Bundle | Not recommended (stale) |
+| [Natural Earth](#natural-earth) | Countries and seas ("will cross") | None (bundle) | n/a | **Public domain** | Yes | No ("Made with Natural Earth" welcome) | Bundle | **Used** for regions (D33) |
 | [tzf-rs](#tzf-rs-time-zone-from-coordinates) | Tz from coordinates | None (crate) | n/a | Code MIT; data **ODbL** | Yes, with ODbL duties | Yes (ODbL) | Offline | **Primary for tz lookup** |
 
 ---
@@ -580,6 +581,29 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
 
 ---
 
+## Countries and seas
+
+### Natural Earth
+
+- **What:** vector map data. Passing Over uses the 1:110m admin-0
+  countries (177 countries, ~10,600 points) and the 1:50m marine polygons
+  (118 named oceans, seas, gulfs and bays such as the North Sea and the
+  Norwegian Sea; the 1:110m marine layer has only 29 and misses those).
+- **License:** "All versions of Natural Earth raster + vector map data
+  found on this website are in the public domain." Crediting is
+  unnecessary; "Made with Natural Earth" is suggested and shown on "About
+  the data".
+- **Boundaries:** Natural Earth shows de facto boundaries; names follow its
+  English names, shortened for sentences ("the United States").
+- **How we use it:** `cargo xtask data` downloads the two GeoJSON files from
+  the `nvkelso/natural-earth-vector` repository pinned to release v5.1.2,
+  simplifies the sea outlines to ~2 km and writes `regions.tsv` (~480 KB,
+  ~180 KB gzipped) with sentence-ready names. No runtime requests.
+- **Checked:** <https://www.naturalearthdata.com/about/terms-of-use/>,
+  <https://github.com/nvkelso/natural-earth-vector>.
+
+---
+
 ## Recommendation for v1
 
 | Category | Primary | Fallback | Why |
@@ -589,6 +613,7 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
 | Arrival time | **Estimate** from remaining great-circle distance ÷ ground speed + ~15 min | none | No free keyless source exists; keyed APIs need a proxy and have tiny quotas. |
 | Weather | **Open-Meteo** (free, non-commercial) | **MET Norway** Locationforecast | Open-Meteo is keyless, global, simple, and also returns the time zone. MET Norway allows commercial use and is the fallback, but its terms discourage direct client calls at scale and cap the whole app at 20 req/s. If a paid tier comes: Open-Meteo paid plan behind a proxy, or MET Norway behind a proxy. METAR from aviationweather.gov is an optional extra for observed conditions. |
 | Airports | **VRS airports** (CC0, guaranteed to match VRS route codes); OurAirports (public domain) only if gaps show up (D24) | mwgg/Airports (MIT) | Free to bundle with no share-alike. No time zone column, so `cargo xtask data` adds one. |
+| What it will cross | **Natural Earth** countries (1:110m) and seas (1:50m), bundled (D33) | none | Public domain, small, offline. |
 | Time zone | **tzf-rs** at build time, giving a `tz` column in the bundled airport table | mwgg `tz`; Open-Meteo `timezone=auto` at runtime | Offline and accurate. ODbL attribution required; publish the generated table under ODbL to be safe. |
 
 ## Politeness defaults
@@ -603,6 +628,7 @@ not a general source. <https://www.weather.gov/documentation/services-web-api>
 | Daily budget | Count requests per source per day on the device. Read `x-ratelimit-*` (adsb.lol) and `X-Rate-Limit-Remaining` (OpenSky). Switch to the fallback or slow to 60 s when below 10 % left. |
 | Route cache | Bundled VRS snapshot; check for a new snapshot at most **once a day** with `If-None-Match`; publish a new one **weekly**. Online fallback (adsbdb): positive results **12 h** in memory only, negative results **6 h**, one lookup per new callsign, at most **10 lookups/min**. |
 | Airport data | Bundled; refreshed with the route snapshot or the app release. No runtime calls. |
+| Weather requests | One batched Open-Meteo request per poll for the destinations not in the cache (up to 20); MET Norway only if that fails, at most 3 places per poll; a failing source pauses 5 min (D34). |
 | Weather cache | Keyed by destination airport. Open-Meteo **15 min** (matches its 15 min `current` interval). MET Norway: honour `Expires` (≈30 min seen) and send `If-Modified-Since`. METAR **15 min**. Fetch only for flights on screen. |
 | Timeouts | Connect 5 s, total 10 s. HTTPS only; accept gzip; follow redirects. |
 | Backoff on 429 | Honour `Retry-After`, `X-Rate-Limit-Retry-After-Seconds` (OpenSky) or `x-ratelimit-reset` (adsb.lol); if absent, wait 60 s. |

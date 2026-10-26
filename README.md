@@ -46,15 +46,18 @@ cargo run -p passingover-cli -- now --lat 55.68 --lon 12.57
 ```
 
 ```text
-SK 588 → Copenhagen. It's 00:00 there. Landing in about 10 min.
-CZ 674 → Beijing. It's 07:00 there. Landing in about 7 h 30 min.
+BA 116 → London. It's 01:30 there, 9°C and overcast. Landing in about 6 h 55 min.
+    Just left New York and will cross the Gulf of Maine, Canada and the Atlantic Ocean.
+AF 10 → New York, landing nearby in about 5 min.
+    Left Paris about 7 h 40 min ago.
 
-Aircraft data: adsb.lol (ODbL), https://adsb.lol. Routes: VRS standing data.
+Aircraft data: adsb.lol (ODbL), https://adsb.lol. Routes: VRS standing data. Weather data by Open-Meteo.com, https://open-meteo.com/.
 ```
 
 Your location is rounded to about 1 km before it's sent to the aircraft
 data source. Route lookups that aren't in the local tables send only the
-flight's callsign, never your location.
+flight's callsign, and weather lookups only the destination airport's
+position, never your location.
 
 App:
 

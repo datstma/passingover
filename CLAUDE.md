@@ -114,8 +114,10 @@ cargo test -p passingover-core -- --ignored             # opt-in live tests (net
 Core modules: `geo` (coordinates, `QueryPoint` privacy rounding), `aircraft`,
 `position` (sources + `PositionFeed`), `http` (`HttpClient`, `UreqClient`),
 `polite` (D15 numbers), `data` (standing data tables), `route` (normalisation,
-plausibility, adsbdb, `RouteLookup`), `flight` (overhead, landing estimate,
-local time), `story` (dreamy lines).
+plausibility, adsbdb, `RouteLookup`), `weather` (Open-Meteo, MET Norway,
+`WeatherLookup`), `regions` (Natural Earth countries and seas, "will cross"),
+`flight` (overhead, landing and departure estimates, local time), `story`
+(sentences and units), `sky` (one poll for every front end), `credits`.
 
 Flutter (from `app/`):
 

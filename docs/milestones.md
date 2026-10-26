@@ -7,7 +7,7 @@ Status values: **Not started** · **In progress** · **Done**.
 | M0 | Foundation | Done |
 | M1 | Core + CLI | Done |
 | M2 | First app view | Done |
-| M3 | Daydream enrichment | Not started |
+| M3 | Daydream enrichment | Done |
 | M4 | Ambient mode | Not started |
 | M5 | Daydream log | Not started |
 | M6 | Native extras | Not started |
@@ -100,6 +100,15 @@ location in the app, with manual lat/lon as a fallback.
 
 Destination weather, the journey as a story (where it left from, how long
 ago), and what it will cross.
+
+- [x] Destination weather: Open-Meteo batched, MET Norway fallback, cached
+      per airport; °C/°F (D13, D34)
+- [x] Journey: "Left Stockholm about 1 h 10 min ago" (D35)
+- [x] "Will cross the Norwegian Sea, Greenland and Canada" from bundled
+      Natural Earth countries and seas (D33)
+- [x] "Landing nearby" for flights landing near the user (D35)
+- [x] CLI (`--imperial`, journey line) and app (weather, journey, units
+      setting); verified live on macOS over New York
 
 ## M4 — Ambient mode
 
